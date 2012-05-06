@@ -34,6 +34,7 @@ GCC_ARMLIB=$PREBUILT/lib/gcc/arm-linux-androideabi/4.4.3
 		--disable-demuxers \
 		--enable-demuxer=mpegts \
 		--enable-avfilter \
+		--disable-debug \
 		--disable-ffmpeg \
 		--disable-avplay \
 		--disable-avconv \
@@ -47,14 +48,26 @@ GCC_ARMLIB=$PREBUILT/lib/gcc/arm-linux-androideabi/4.4.3
 		--enable-cross-compile \
 		--cross-prefix=$PREBUILT/bin/arm-linux-androideabi- \
 		--extra-cflags="-fPIC -DANDROID -march=$APP_ABI" \
+		--extra-ldflags="-march=$APP_ABI" \
 		--sysroot=$PLATFORM \
 		--disable-asm \
 		--enable-neon \
-		--enable-armvfp \
-		--extra-ldflags="-Wl,-T,$PREBUILT/arm-linux-androideabi/lib/ldscripts/armelf_linux_eabi.x -Wl,-rpath-link=$PLATFORM/usr/lib -L$PLATFORM/usr/lib -nostdlib $GCC_ARMLIB/crtbegin.o $GCC_ARMLIB/crtend.o -lc -lm -ldl"
+		--extra-ldflags="-Wl,--entry=main,-rpath-link=$PLATFORM/usr/lib -L$PLATFORM/usr/lib -nostdlib -lc"
+	
+	echo "Patch config.h"
 	
 	sed -i 's/#define restrict restrict/#define restrict/g' config.h
-	echo > libavutil/libm.h
+	
+	cat << EOF >> config.h
+#undef HAVE_LRINT
+#define HAVE_LRINT 1
+#undef HAVE_LRINTF
+#define HAVE_LRINTF 1
+#undef HAVE_ROUND
+#define HAVE_ROUND 1
+#undef HAVE_TRUNC
+#define HAVE_TRUNC 1
+EOF
 	
 	cp -v ../template_av.mk av.mk
 	cp -v ../template_libav.mk Android.mk
@@ -62,5 +75,6 @@ GCC_ARMLIB=$PREBUILT/lib/gcc/arm-linux-androideabi/4.4.3
 	cp -v ../template_libavfilter.mk libavfilter/Android.mk
 	cp -v ../template_libavformat.mk libavformat/Android.mk
 	cp -v ../template_libavutil.mk libavutil/Android.mk
-	cp -v ../template_libswscale.mk libavutil/Android.mk
+	cp -v ../template_libswscale.mk libswscale/Android.mk
+	cp -v ../template_libpostproc.mk libpostproc/Android.mk
 )
