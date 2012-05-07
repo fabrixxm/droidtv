@@ -1,6 +1,6 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
-LOCAL_STATIC_LIBRARIES := libavformat libavcodec libavutil libavfilter libswscale
+LOCAL_STATIC_LIBRARIES := libavformat libavcodec libavfilter libswscale libavutil
 LOCAL_MODULE := av
 include $(BUILD_STATIC_LIBRARY)
 
