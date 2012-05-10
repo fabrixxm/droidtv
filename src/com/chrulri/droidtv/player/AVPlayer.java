@@ -21,6 +21,7 @@ package com.chrulri.droidtv.player;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -42,6 +43,8 @@ public final class AVPlayer {
 		System.loadLibrary("avplayer");
 	}
 
+	private int mNativeContext = 0;
+	
 	private Bitmap mBitmap;
 	private Matrix mMatrix = new Matrix();
 	private RectF mBounds = new RectF();
@@ -74,8 +77,12 @@ public final class AVPlayer {
 				performRender();
 			}
 		});
+		
+		_initialize(new WeakReference<AVPlayer>(this));
 	}
-
+	
+	private native void _initialize(WeakReference<AVPlayer> player);
+	
 	private native int _prepare(String fileName);
 
 	private native int _start();
@@ -84,21 +91,21 @@ public final class AVPlayer {
 
 	private native int _getState();
 
-	private int callbackAudio(short[] buffer, int bufsize) {
+	private int postAudio(short[] buffer, int bufsize) {
 		// TODO implement
 		return 0;
 	}
 
-	private Bitmap callbackPrepareBitmap(int width, int height) {
+	private Bitmap postPrepare(int width, int height) {
 		mBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
 		return mBitmap;
 	}
 
-	private void callbackVideo() {
+	private void postVideo() {
 		performRender();
 	}
 
-	private void callbackNotify(int msg, int ext1, int ext2) {
+	private void postNotify(int msg, int ext1, int ext2) {
 		// TODO implement
 	}
 

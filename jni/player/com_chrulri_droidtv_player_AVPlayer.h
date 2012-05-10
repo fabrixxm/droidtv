@@ -19,6 +19,14 @@ extern "C" {
 #define com_chrulri_droidtv_player_AVPlayer_STATE_PLAYING 4L
 /*
  * Class:     com_chrulri_droidtv_player_AVPlayer
+ * Method:    _initialize
+ * Signature: (Ljava/lang/ref/WeakReference;)V
+ */
+JNIEXPORT void JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1initialize
+  (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     com_chrulri_droidtv_player_AVPlayer
  * Method:    _prepare
  * Signature: (Ljava/lang/String;)I
  */
