@@ -44,7 +44,7 @@ public final class AVPlayer {
 	}
 
 	private int mNativeContext = 0;
-	
+
 	private Bitmap mBitmap;
 	private Matrix mMatrix = new Matrix();
 	private RectF mBounds = new RectF();
@@ -54,7 +54,7 @@ public final class AVPlayer {
 	private OnUpdateListener mListener;
 	private String mFileName;
 
-	private AVPlayer(SurfaceHolder surface, OnUpdateListener listener) {
+	public AVPlayer(SurfaceHolder surface, OnUpdateListener listener) {
 		mSurface = surface;
 		mListener = listener;
 
@@ -77,12 +77,12 @@ public final class AVPlayer {
 				performRender();
 			}
 		});
-		
+
 		_initialize(new WeakReference<AVPlayer>(this));
 	}
-	
+
 	private native void _initialize(WeakReference<AVPlayer> player);
-	
+
 	private native int _prepare(String fileName);
 
 	private native int _start();
@@ -120,15 +120,11 @@ public final class AVPlayer {
 		}
 	}
 
-	public void setDataSource(String fileName) {
-		mFileName = fileName;
-	}
-
-	public void prepare() throws IOException {
-		if (mFileName == null || !new File(mFileName).canRead()) {
+	public void prepare(String fileName) throws IOException {
+		if (fileName == null || !new File(fileName).canRead()) {
 			throw new FileNotFoundException();
 		}
-		int ret = _prepare(mFileName);
+		int ret = _prepare(fileName);
 		if (ret != 0) {
 			throw new IOException("prepare[" + ret + "]");
 		}
@@ -136,5 +132,25 @@ public final class AVPlayer {
 
 	public interface OnUpdateListener {
 		// TODO implement
+	}
+
+	public void start() throws IOException {
+		// TODO check if current state is valid
+		int ret = _start();
+		if (ret != 0) {
+			throw new IOException("start[" + ret + "]");
+		}
+	}
+
+	public void stop() throws IOException {
+		// TODO check if current state is valid
+		int ret = _stop();
+		if (ret != 0) {
+			throw new IOException("stop[" + ret + "]");
+		}
+	}
+
+	public boolean isPlaying() {
+		return _getState() == STATE_PLAYING;
 	}
 }

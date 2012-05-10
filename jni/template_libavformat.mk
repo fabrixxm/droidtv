@@ -5,6 +5,7 @@ LOCAL_SRC_FILES := $(FFFILES)
 LOCAL_C_INCLUDES :=		\
 	$(LOCAL_PATH)		\
 	$(LOCAL_PATH)/..
+LOCAL_CFLAGS := -Wno-long-long
 LOCAL_CFLAGS += $(FFCFLAGS)
 LOCAL_CFLAGS += -include "string.h" -Dipv6mr_interface=ipv6mr_ifindex
 LOCAL_LDLIBS := -lz

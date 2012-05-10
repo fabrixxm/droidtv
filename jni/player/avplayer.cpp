@@ -1,31 +1,13 @@
 #include <jni.h>
-#include <android/log.h>
-#include <android/bitmap.h>
 
 #include <errno.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
-extern "C" {
-#include <libavformat/avformat.h>
-#include <libavcodec/avcodec.h>
-#include <libswscale/swscale.h>
-} // end of extern C
+#include "mediaplayer.h"
+#include "utils.h"
 
 #include "com_chrulri_droidtv_player_AVPlayer.h"
-#include "mediaplayer.h"
-
-#define UNUSED  __attribute__((unused))
-
-#define LOG_TAG "AVPlayerNative"
-#define LOGE(...)	__android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
-#ifdef DEBUG
-#define LOGD(...)	__android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
-#define LOGI(...)	__android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
-#else
-#define LOGD(...)	((void)0)
-#define LOGI(...)	((void)0)
-#endif
 
 #define CLASS_OUT_OF_MEMORY_ERROR	"java/lang/OutOfMemoryError"
 #define CLASS_RUNTIME_EXCEPTION		"java/lang/RuntimeException"
@@ -121,7 +103,7 @@ public:
 	~AVPlayerListener();
 	void postAudio(int16_t* buffer, int size);
 	void postVideo();
-	void postPrepare(int width, int height);
+	jobject postPrepare(int width, int height);
 	void postNotify(int msg, int ext1, int ext2);
 private:
 	AVPlayerListener();
@@ -149,9 +131,9 @@ void AVPlayerListener::postVideo() {
 	env->CallVoidMethod(mPlayer, fields.postVideo);
 }
 
-void AVPlayerListener::postPrepare(int width, int height) {
+jobject AVPlayerListener::postPrepare(int width, int height) {
 	JNIEnv *env = getJNIEnv();
-	env->CallVoidMethod(mPlayer, fields.postPrepare, width, height);
+	return env->CallObjectMethod(mPlayer, fields.postPrepare, width, height);
 }
 
 void AVPlayerListener::postNotify(int msg, int ext1, int ext2) {
@@ -168,7 +150,7 @@ static MediaPlayer* setNativeContext(JNIEnv* env, jobject thiz,
 	MediaPlayer* old = getNativeContext(env, thiz);
 	if (old != NULL) {
 		LOGI("freeing old media player object");
-		delete (old);
+		delete old;
 	}
 	env->SetIntField(thiz, fields.context, (jint) player);
 	return old;
@@ -191,7 +173,7 @@ JNIEXPORT jint JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1prepare(
 	const char* fileName = env->GetStringUTFChars(jFileName, NULL);
 
 	MediaPlayer* mp = getNativeContext(env, thiz);
-	ret = mp->prepare(fileName);
+	ret = mp->prepare(env, fileName);
 
 	env->ReleaseStringUTFChars(jFileName, fileName);
 	return ret;
@@ -216,5 +198,14 @@ JNIEXPORT jint JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1getState(
 }
 
 static void avlibNotify(void* ptr, int level, const char* fmt, va_list vl) {
-	LOGD("AVLib[%d]: %s", level, fmt);
+	LOGD("AVLib[%s]:",
+		level == AV_LOG_PANIC ? "PANIC" :
+		level == AV_LOG_FATAL ? "FATAL" :
+		level == AV_LOG_ERROR ? "ERROR" :
+		level == AV_LOG_WARNING ? "WARNING" :
+		level == AV_LOG_INFO ? "INFO" :
+		level == AV_LOG_VERBOSE ? "VERBOSE" :
+		level == AV_LOG_DEBUG ? "DEBUG" :
+		"UNKNOWN");
+	LOGDAV(fmt, vl);
 }
