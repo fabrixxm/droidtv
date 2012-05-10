@@ -4,10 +4,9 @@
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
-    <VideoView
+    <SurfaceView
         android:id="@+id/stream_video"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:keepScreenOn="true" />
+        android:layout_height="wrap_content" />
 
 </LinearLayout>
