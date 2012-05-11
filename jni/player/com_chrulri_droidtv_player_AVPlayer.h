@@ -28,10 +28,10 @@ extern "C" {
 /*
  * Class:     com_chrulri_droidtv_player_AVPlayer
  * Method:    _initialize
- * Signature: (Ljava/lang/ref/WeakReference;)V
+ * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1initialize
-  (JNIEnv *, jobject, jobject);
+  (JNIEnv *, jobject);
 
 /*
  * Class:     com_chrulri_droidtv_player_AVPlayer
@@ -72,6 +72,14 @@ JNIEXPORT jint JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1stop
  */
 JNIEXPORT jint JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1getState
   (JNIEnv *, jobject);
+
+/*
+ * Class:     com_chrulri_droidtv_player_AVPlayer
+ * Method:    _drawFrame
+ * Signature: (Landroid/graphics/Bitmap;)V
+ */
+JNIEXPORT void JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1drawFrame
+  (JNIEnv *, jobject, jobject);
 
 #ifdef __cplusplus
 }

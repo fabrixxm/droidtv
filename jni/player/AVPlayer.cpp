@@ -111,9 +111,9 @@ void jniThrowException(JNIEnv* env, const char* className, const char* msg) {
 
 class AVPlayerListener: public MediaPlayerListener {
 public:
-	AVPlayerListener(JNIEnv* env, jobject thiz, jobject weakRef);
+	AVPlayerListener(JNIEnv* env, jobject thiz);
 	~AVPlayerListener();
-	jint postAudio(int16_t* buffer, int size);
+	jint postAudio(jshortArray buffer, int size);
 	void postVideo();
 	jobject postPrepareVideo(int width, int height);
 	jboolean postPrepareAudio(int sampleRate);
@@ -123,8 +123,8 @@ private:
 	jobject mPlayer;
 };
 
-AVPlayerListener::AVPlayerListener(JNIEnv* env, jobject thiz, jobject weakRef) {
-	mPlayer = env->NewGlobalRef(weakRef);
+AVPlayerListener::AVPlayerListener(JNIEnv* env, jobject thiz) {
+	mPlayer = env->NewGlobalRef(thiz);
 }
 
 AVPlayerListener::~AVPlayerListener() {
@@ -132,11 +132,9 @@ AVPlayerListener::~AVPlayerListener() {
 	env->DeleteGlobalRef(mPlayer);
 }
 
-jint AVPlayerListener::postAudio(int16_t* buffer, int size) {
+jint AVPlayerListener::postAudio(jshortArray buffer, int size) {
 	JNIEnv *env = getJNIEnv();
-	jshortArray jBuffer = env->NewShortArray(size);
-	env->SetShortArrayRegion(jBuffer, 0, size, buffer);
-	return env->CallIntMethod(mPlayer, fields.postAudio, jBuffer, size);
+	return env->CallIntMethod(mPlayer, fields.postAudio, buffer, size);
 }
 
 void AVPlayerListener::postVideo() {
@@ -178,10 +176,10 @@ static void setNativeContext(JNIEnv* env, jobject thiz,
 }
 
 JNIEXPORT void JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1initialize(
-		JNIEnv *env, jobject thiz, jobject weakRef) {
+		JNIEnv *env, jobject thiz) {
 	LOGI("_initialize");
 	MediaPlayer* mp = new MediaPlayer();
-	AVPlayerListener * listener = new AVPlayerListener(env, thiz, weakRef);
+	AVPlayerListener * listener = new AVPlayerListener(env, thiz);
 	mp->setListener(listener);
 	setNativeContext(env, thiz, mp);
 }
@@ -222,6 +220,13 @@ JNIEXPORT jint JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1getState(
 	MediaPlayer* mp = getNativeContext(env, thiz);
 	return mp->getState();
 }
+
+JNIEXPORT void JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1drawFrame
+  (JNIEnv *env, jobject thiz, jobject bitmap) {
+	MediaPlayer* mp = getNativeContext(env, thiz);
+	mp->drawFrame(env, bitmap);
+}
+
 
 static void avlibNotify(void* ptr, int level, const char* fmt, va_list vl) {
 	LOGD("AVLib[%s]:",

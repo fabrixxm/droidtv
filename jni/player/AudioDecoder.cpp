@@ -15,8 +15,9 @@ AudioDecoder::~AudioDecoder() {
 
 bool AudioDecoder::prepare() {
 	mSamplesSize = AVCODEC_MAX_AUDIO_FRAME_SIZE;
-	mSamples = (int16_t *) av_malloc(mSamplesSize);
-	if (mSamples == NULL) {
+	JNIEnv* env = getJNIEnv();
+	mjSamples = env->NewShortArray(mSamplesSize);
+	if (mjSamples == NULL) {
 		// TODO error log needed?
 		return false;
 	}
@@ -24,9 +25,12 @@ bool AudioDecoder::prepare() {
 }
 
 bool AudioDecoder::process(AVPacket *packet) {
+	JNIEnv* env = getJNIEnv();
 	int size = mSamplesSize;
-	avcodec_decode_audio3(mStream->codec, mSamples, &size, packet);
-	mListener->decodeAudioFrame(mSamples, size);
+	jshort* samples = env->GetShortArrayElements(mjSamples, NULL);
+	avcodec_decode_audio3(mStream->codec, samples, &size, packet);
+	env->ReleaseShortArrayElements(mjSamples, samples, 0);
+	mListener->decodeAudioFrame(mjSamples, size);
 	return true;
 }
 
@@ -43,7 +47,5 @@ bool AudioDecoder::decode() {
 		av_free_packet(&packet);
 	}
 	LOGI("decoding audio ended");
-	// allocated by av_malloc in ::prepare()
-	av_free(mSamples);
 	return true;
 }

@@ -2,12 +2,13 @@
 #define DROIDTV_AUDIO_DECODER_H
 
 #include "Decoder.h"
+#include <jni.h>
 
 
 class AudioDecoderListener {
 public:
 	virtual ~AudioDecoderListener();
-	virtual void decodeAudioFrame(int16_t* buffer, int size) = 0;
+	virtual void decodeAudioFrame(jshortArray buffer, int size) = 0;
 };
 
 class AudioDecoder : public Decoder
@@ -21,7 +22,7 @@ private:
 	bool decode();
 	bool process(AVPacket* packet);
 
-	int16_t* mSamples;
+	jshortArray mjSamples;
 	int mSamplesSize;
 	AudioDecoderListener* mListener;
 };

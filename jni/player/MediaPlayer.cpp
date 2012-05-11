@@ -12,7 +12,7 @@ MediaPlayerListener::~MediaPlayerListener() {
 class MediaPlayerAudioListener: public AudioDecoderListener {
 public:
 	MediaPlayerAudioListener(MediaPlayer* mp);
-	void decodeAudioFrame(int16_t* buffer, int size);
+	void decodeAudioFrame(jshortArray buffer, int size);
 private:
 	MediaPlayer* mPlayer;
 };
@@ -21,7 +21,7 @@ MediaPlayerAudioListener::MediaPlayerAudioListener(MediaPlayer* mp) {
 	mPlayer = mp;
 }
 
-void MediaPlayerAudioListener::decodeAudioFrame(int16_t* buffer, int size) {
+void MediaPlayerAudioListener::decodeAudioFrame(jshortArray buffer, int size) {
 	mPlayer->decodeAudio(buffer, size);
 }
 
@@ -44,7 +44,6 @@ void MediaPlayerVideoListener::decodeVideoFrame(AVFrame* frame, double pts) {
 MediaPlayer::MediaPlayer() {
 	mState = STATE_UNINITIALIZED;
 	mListener = NULL;
-	mBitmap = NULL;
 	mFrame = NULL;
 	mCtxConvert = NULL;
 	mAudioStreamIndex = 0;
@@ -56,6 +55,9 @@ MediaPlayer::~MediaPlayer() {
 	if (mListener != NULL) {
 		delete mListener;
 	}
+	av_free(mFrame);
+	avformat_free_context(mInputFile);
+	sws_freeContext(mCtxConvert);
 }
 
 int MediaPlayer::prepare(JNIEnv *env, const char* fileName) {
@@ -133,10 +135,10 @@ int MediaPlayer::prepare(JNIEnv *env, const char* fileName) {
 		return ERROR_VIDEO_CODEC;
 	}
 
-	int videoWidth = codec_ctx->width;
-	int videoHeight = codec_ctx->height;
+	mVideoWidth = codec_ctx->width;
+	mVideoHeight = codec_ctx->height;
 	//duration =  mInputFile->duration;
-	LOGD("input:%dx%d@%d", videoWidth, videoHeight, mInputFile->duration);
+	LOGD("input:%dx%d@%d", mVideoWidth, mVideoHeight, mInputFile->duration);
 
 	mCtxConvert = sws_getContext(stream->codec->width, stream->codec->height,
 			stream->codec->pix_fmt, stream->codec->width, stream->codec->height,
@@ -151,19 +153,20 @@ int MediaPlayer::prepare(JNIEnv *env, const char* fileName) {
 		return ERROR_ALLOC_FRAME;
 	}
 
-	mBitmap = mListener->postPrepareVideo(videoWidth, videoHeight);
+	jobject bitmap = mListener->postPrepareVideo(mVideoWidth, mVideoHeight);
 
-	if (mBitmap == NULL) {
+	if (bitmap == NULL) {
 		LOGE("Bitmap is NULL");
 		return ERROR_INVALID_BITMAP;
 	}
 
-	if ((ret = AndroidBitmap_getInfo(env, mBitmap, &mBitmapInfo))) {
+	AndroidBitmapInfo bitmapInfo;
+	if ((ret = AndroidBitmap_getInfo(env, bitmap, &bitmapInfo))) {
 		LOGE("AndroidBitmap_getInfo(..) failed: 0x%x", ret);
 		return ERROR_INVALID_BITMAP;
 	}
 
-	if (mBitmapInfo.format != ANDROID_BITMAP_FORMAT_RGB_565) {
+	if (bitmapInfo.format != ANDROID_BITMAP_FORMAT_RGB_565) {
 		LOGE("Bitmap format is not RGB_565!");
 		return ERROR_INVALID_BITMAP;
 	}
@@ -272,20 +275,21 @@ void MediaPlayer::decodeStream() {
 }
 
 void MediaPlayer::decodeVideo(AVFrame* frame, double pts) {
-	JNIEnv* env = getJNIEnv();
-	void* pixels;
-	AndroidBitmap_lockPixels(env, mBitmap, &pixels);
-
-	avpicture_fill((AVPicture*) mFrame, (uint8_t*) pixels, PIX_FMT_RGB565LE,
-			mBitmapInfo.width, mBitmapInfo.height);
 	// convert to RGB565
-	sws_scale(mCtxConvert, frame->data, frame->linesize, 0, mBitmapInfo.height,
+	sws_scale(mCtxConvert, frame->data, frame->linesize, 0, mVideoHeight,
 			mFrame->data, mFrame->linesize);
 
-	AndroidBitmap_unlockPixels(env, mBitmap);
 	mListener->postVideo();
 }
 
-void MediaPlayer::decodeAudio(int16_t* buffer, int size) {
+void MediaPlayer::drawFrame(JNIEnv* env, jobject bitmap) {
+	void* pixels;
+	AndroidBitmap_lockPixels(env, bitmap, &pixels);
+	avpicture_fill((AVPicture*) mFrame, (uint8_t*) pixels, PIX_FMT_RGB565LE,
+			mVideoWidth, mVideoHeight);
+	AndroidBitmap_unlockPixels(env, bitmap);
+}
+
+void MediaPlayer::decodeAudio(jshortArray buffer, int size) {
 	mListener->postAudio(buffer, size);
 }

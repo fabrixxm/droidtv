@@ -21,7 +21,6 @@ package com.chrulri.droidtv.player;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -29,9 +28,14 @@ import android.graphics.Matrix;
 import android.graphics.Matrix.ScaleToFit;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
+import android.util.Log;
 import android.view.SurfaceHolder;
 
 public final class AVPlayer {
+	static final String TAG = AVPlayer.class.getSimpleName();
 
 	public static final int STATE_UNKNOWN = 0;
 	public static final int STATE_UNINITIALIZED = 1;
@@ -49,6 +53,7 @@ public final class AVPlayer {
 
 	private int mNativeContext = 0;
 
+	private AudioTrack mAudioTrack;
 	private Bitmap mBitmap;
 	private Matrix mMatrix = new Matrix();
 	private RectF mBounds = new RectF();
@@ -82,7 +87,7 @@ public final class AVPlayer {
 			}
 		});
 
-		_initialize(new WeakReference<AVPlayer>(this));
+		_initialize();
 	}
 
 	@Override
@@ -90,7 +95,7 @@ public final class AVPlayer {
 		_finalize();
 	}
 
-	private native void _initialize(WeakReference<AVPlayer> player);
+	private native void _initialize();
 
 	private native void _finalize();
 
@@ -102,31 +107,50 @@ public final class AVPlayer {
 
 	private native int _getState();
 
-	private int postAudio(short[] buffer, int bufsize) {
-		// TODO implement
-		return 0;
-	}
+	private native void _drawFrame(Bitmap bitmap);
 
 	private Bitmap postPrepareVideo(int width, int height) {
+		Log.d(TAG, "postPrepareVideo");
 		mBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
 		return mBitmap;
 	}
-	
+
 	private boolean postPrepareAudio(int sampleRate) {
-		// TODO implement
+		Log.d(TAG, "postPrepareAudio");
+
+		final int channelConfig = AudioFormat.CHANNEL_OUT_STEREO;
+		final int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+
+		try {
+			mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate,
+					channelConfig, audioFormat, AudioTrack.getMinBufferSize(
+							sampleRate, channelConfig, audioFormat),
+					AudioTrack.MODE_STREAM);
+		} catch (Throwable t) {
+			Log.e(TAG, "postPrepareAudio", t);
+			return false;
+		}
 		return true;
 	}
 
+	private int postAudio(short[] buffer, int bufsize) {
+		// Log.d(TAG, "postAudio");
+		return mAudioTrack.write(buffer, 0, bufsize);
+	}
+
 	private void postVideo() {
+		// Log.d(TAG, "postVideo");
 		performRender();
 	}
 
 	private void postNotify(int msg, int ext1, int ext2) {
+		Log.d(TAG, "postNotify");
 		// TODO implement
 	}
 
 	private void performRender() {
 		if (mBitmap != null) {
+			_drawFrame(mBitmap);
 			Canvas c = mSurface.lockCanvas();
 			if (c != null) {
 				c.drawPaint(new Paint());
@@ -151,6 +175,7 @@ public final class AVPlayer {
 	}
 
 	public void start() throws IOException {
+		mAudioTrack.play();
 		// TODO check if current state is valid
 		int ret = _start();
 		if (ret != 0) {
@@ -159,6 +184,7 @@ public final class AVPlayer {
 	}
 
 	public void stop() throws IOException {
+		mAudioTrack.stop();
 		// TODO check if current state is valid
 		int ret = _stop();
 		if (ret != 0) {

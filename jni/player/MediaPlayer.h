@@ -43,7 +43,7 @@ extern "C" {
 class MediaPlayerListener {
 public:
 	virtual ~MediaPlayerListener();
-	virtual jint postAudio(int16_t* buffer, int size) = 0;
+	virtual jint postAudio(jshortArray buffer, int size) = 0;
 	virtual void postVideo() = 0;
 	virtual jboolean postPrepareAudio(int sampleRate) = 0;
 	virtual jobject postPrepareVideo(int width, int height) = 0;
@@ -63,19 +63,22 @@ public:
 	int getState();
 
 	void decodeVideo(AVFrame* frame, double pts);
-	void decodeAudio(int16_t* buffer, int size);
+	void decodeAudio(jshortArray buffer, int size);
+
+	void drawFrame(JNIEnv* env, jobject bitmap);
 
 private:
 	static void* runMainThread(void* ptr);
 
 	void decodeStream();
 
+	int mVideoWidth;
+	int mVideoHeight;
 	int mState;
 	MediaPlayerListener* mListener;
 
 	pthread_t mMainThread;
-	jobject mBitmap;
-	AndroidBitmapInfo mBitmapInfo;
+
 	AVFrame* mFrame;
 	AVFormatContext* mInputFile;
 	int mAudioStreamIndex;
