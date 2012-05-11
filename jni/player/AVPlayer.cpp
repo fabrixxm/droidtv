@@ -21,7 +21,8 @@ struct fields_t {
 	jfieldID context;
 	jmethodID postAudio;
 	jmethodID postVideo;
-	jmethodID postPrepare;
+	jmethodID postPrepareVideo;
+	jmethodID postPrepareAudio;
 	jmethodID postNotify;
 };
 static fields_t fields;
@@ -73,10 +74,17 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 		return JNI_ERR;
 	}
 
-	fields.postPrepare = env->GetMethodID(clazz, "postPrepare",
+	fields.postPrepareVideo = env->GetMethodID(clazz, "postPrepareVideo",
 			"(II)Landroid/graphics/Bitmap;");
-	if (fields.postPrepare == NULL) {
-		LOGE("Can't find AVPlayer.postPrepare");
+	if (fields.postPrepareVideo == NULL) {
+		LOGE("Can't find AVPlayer.postPrepareVideo");
+		return JNI_ERR;
+	}
+
+	fields.postPrepareAudio = env->GetMethodID(clazz, "postPrepareAudio",
+			"(I)Z");
+	if (fields.postPrepareAudio == NULL) {
+		LOGE("Can't find AVPlayer.postPrepareAudio");
 		return JNI_ERR;
 	}
 
@@ -107,7 +115,8 @@ public:
 	~AVPlayerListener();
 	void postAudio(int16_t* buffer, int size);
 	void postVideo();
-	jobject postPrepare(int width, int height);
+	jobject postPrepareVideo(int width, int height);
+	jboolean postPrepareAudio(int sampleRate);
 	void postNotify(int msg, int ext1, int ext2);
 private:
 	AVPlayerListener();
@@ -135,9 +144,14 @@ void AVPlayerListener::postVideo() {
 	env->CallVoidMethod(mPlayer, fields.postVideo);
 }
 
-jobject AVPlayerListener::postPrepare(int width, int height) {
+jobject AVPlayerListener::postPrepareVideo(int width, int height) {
 	JNIEnv *env = getJNIEnv();
-	return env->CallObjectMethod(mPlayer, fields.postPrepare, width, height);
+	return env->CallObjectMethod(mPlayer, fields.postPrepareVideo, width, height);
+}
+
+jboolean AVPlayerListener::postPrepareAudio(int sampleRate) {
+	JNIEnv *env = getJNIEnv();
+	return env->CallBooleanMethod(mPlayer, fields.postPrepareAudio, sampleRate);
 }
 
 void AVPlayerListener::postNotify(int msg, int ext1, int ext2) {

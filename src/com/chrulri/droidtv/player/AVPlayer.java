@@ -107,9 +107,14 @@ public final class AVPlayer {
 		return 0;
 	}
 
-	private Bitmap postPrepare(int width, int height) {
+	private Bitmap postPrepareVideo(int width, int height) {
 		mBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
 		return mBitmap;
+	}
+	
+	private boolean postPrepareAudio(int sampleRate) {
+		// TODO implement
+		return true;
 	}
 
 	private void postVideo() {

@@ -4,7 +4,7 @@
 #include "MediaPlayer.h"
 #include "utils.h"
 
-#define MAX_QUEUE_SIZE 15
+#define MAX_QUEUE_SIZE 300
 
 MediaPlayerListener::~MediaPlayerListener() {
 }
@@ -104,6 +104,10 @@ int MediaPlayer::prepare(JNIEnv *env, const char* fileName) {
 		return ERROR_AUDIO_CODEC;
 	}
 
+	if (!mListener->postPrepareAudio(stream->codec->sample_rate)) {
+		return ERROR_INVALID_TRACK;
+	}
+
 	// prepare video
 	mVideoStreamIndex = -1;
 	for (i = 0; i < mInputFile->nb_streams; i++) {
@@ -131,7 +135,7 @@ int MediaPlayer::prepare(JNIEnv *env, const char* fileName) {
 
 	int videoWidth = codec_ctx->width;
 	int videoHeight = codec_ctx->height;
-	//sDuration =  mInputFile->duration;
+	//duration =  mInputFile->duration;
 	LOGD("input:%dx%d@%d", videoWidth, videoHeight, mInputFile->duration);
 
 	mCtxConvert = sws_getContext(stream->codec->width, stream->codec->height,
@@ -147,7 +151,12 @@ int MediaPlayer::prepare(JNIEnv *env, const char* fileName) {
 		return ERROR_ALLOC_FRAME;
 	}
 
-	mBitmap = mListener->postPrepare(videoWidth, videoHeight);
+	mBitmap = mListener->postPrepareVideo(videoWidth, videoHeight);
+
+	if (mBitmap == NULL) {
+		LOGE("Bitmap is NULL");
+		return ERROR_INVALID_BITMAP;
+	}
 
 	if ((ret = AndroidBitmap_getInfo(env, mBitmap, &mBitmapInfo))) {
 		LOGE("AndroidBitmap_getInfo(..) failed: 0x%x", ret);
@@ -218,6 +227,7 @@ void MediaPlayer::decodeStream() {
 	while (mState == STATE_PLAYING) {
 		if (mVideoDecoder->packets() > MAX_QUEUE_SIZE
 				&& mAudioDecoder->packets() > MAX_QUEUE_SIZE) {
+			//LOGI("packets() > MAX_QUEUE_SIZE");
 			usleep(200);
 			continue;
 		}
@@ -262,10 +272,17 @@ void MediaPlayer::decodeStream() {
 }
 
 void MediaPlayer::decodeVideo(AVFrame* frame, double pts) {
+	JNIEnv* env = getJNIEnv();
+	void* pixels;
+	AndroidBitmap_lockPixels(env, mBitmap, &pixels);
+
+	avpicture_fill((AVPicture*) mFrame, (uint8_t*) pixels, PIX_FMT_RGB565LE,
+			mBitmapInfo.width, mBitmapInfo.height);
 	// convert to RGB565
 	sws_scale(mCtxConvert, frame->data, frame->linesize, 0, mBitmapInfo.height,
 			mFrame->data, mFrame->linesize);
 
+	AndroidBitmap_unlockPixels(env, mBitmap);
 	mListener->postVideo();
 }
 

@@ -17,5 +17,6 @@
 #endif
 
 JavaVM* getJVM();
+JNIEnv* getJNIEnv();
 
 #endif // DROIDTV_UTILS_H

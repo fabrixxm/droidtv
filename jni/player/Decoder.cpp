@@ -11,6 +11,7 @@ Decoder::Decoder(AVStream* stream) {
 	pthread_cond_init(&mQueue.cond, NULL);
 	mQueue.first = NULL;
 	mQueue.last = NULL;
+	mQueue.size = 0;
 }
 
 Decoder::~Decoder() {

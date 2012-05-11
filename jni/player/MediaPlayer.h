@@ -25,7 +25,8 @@
 #define ERROR_SWS_CONTEXT		9
 #define ERROR_ALLOC_FRAME		10
 #define ERROR_INVALID_BITMAP	11
-#define ERROR_INVALID_OPERATION	12
+#define ERROR_INVALID_TRACK		12
+#define ERROR_INVALID_OPERATION	13
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -44,7 +45,8 @@ public:
 	virtual ~MediaPlayerListener();
 	virtual void postAudio(int16_t* buffer, int size) = 0;
 	virtual void postVideo() = 0;
-	virtual jobject postPrepare(int width, int height) = 0;
+	virtual jboolean postPrepareAudio(int sampleRate) = 0;
+	virtual jobject postPrepareVideo(int width, int height) = 0;
 	virtual void postNotify(int msg, int ext1, int ext2) = 0;
 };
 
