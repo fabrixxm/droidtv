@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "mediaplayer.h"
+#include "MediaPlayer.h"
 #include "utils.h"
 
 #include "com_chrulri_droidtv_player_AVPlayer.h"
@@ -25,6 +25,10 @@ struct fields_t {
 	jmethodID postNotify;
 };
 static fields_t fields;
+
+JavaVM* getJVM() {
+	return sVm;
+}
 
 JNIEnv* getJNIEnv() {
 	JNIEnv* env;
@@ -145,15 +149,18 @@ static MediaPlayer* getNativeContext(JNIEnv* env, jobject thiz) {
 	return (MediaPlayer*) env->GetIntField(thiz, fields.context);
 }
 
-static MediaPlayer* setNativeContext(JNIEnv* env, jobject thiz,
-		MediaPlayer* player) {
+static void freeNativeContext(JNIEnv* env, jobject thiz) {
 	MediaPlayer* old = getNativeContext(env, thiz);
 	if (old != NULL) {
 		LOGI("freeing old media player object");
 		delete old;
 	}
+}
+
+static void setNativeContext(JNIEnv* env, jobject thiz,
+		MediaPlayer* player) {
+	freeNativeContext(env, thiz);
 	env->SetIntField(thiz, fields.context, (jint) player);
-	return old;
 }
 
 JNIEXPORT void JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1initialize(
@@ -163,6 +170,11 @@ JNIEXPORT void JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1initialize(
 	AVPlayerListener * listener = new AVPlayerListener(env, thiz, weakRef);
 	mp->setListener(listener);
 	setNativeContext(env, thiz, mp);
+}
+
+JNIEXPORT void JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1finalize(
+		JNIEnv *env, jobject thiz) {
+	freeNativeContext(env, thiz);
 }
 
 JNIEXPORT jint JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1prepare(
@@ -199,13 +211,13 @@ JNIEXPORT jint JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1getState(
 
 static void avlibNotify(void* ptr, int level, const char* fmt, va_list vl) {
 	LOGD("AVLib[%s]:",
-		level == AV_LOG_PANIC ? "PANIC" :
-		level == AV_LOG_FATAL ? "FATAL" :
-		level == AV_LOG_ERROR ? "ERROR" :
-		level == AV_LOG_WARNING ? "WARNING" :
-		level == AV_LOG_INFO ? "INFO" :
-		level == AV_LOG_VERBOSE ? "VERBOSE" :
-		level == AV_LOG_DEBUG ? "DEBUG" :
-		"UNKNOWN");
+			level == AV_LOG_PANIC ? "PANIC" :
+			level == AV_LOG_FATAL ? "FATAL" :
+			level == AV_LOG_ERROR ? "ERROR" :
+			level == AV_LOG_WARNING ? "WARNING" :
+			level == AV_LOG_INFO ? "INFO" :
+			level == AV_LOG_VERBOSE ? "VERBOSE" :
+			level == AV_LOG_DEBUG ? "DEBUG" :
+			"UNKNOWN");
 	LOGDAV(fmt, vl);
 }

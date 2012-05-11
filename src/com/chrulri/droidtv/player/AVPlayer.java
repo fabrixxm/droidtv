@@ -38,6 +38,10 @@ public final class AVPlayer {
 	public static final int STATE_PREPARING = 2;
 	public static final int STATE_PREPARED = 3;
 	public static final int STATE_PLAYING = 4;
+	public static final int STATE_ERROR = 5;
+	public static final int STATE_FINISHED = 6;
+	public static final int STATE_STARTING = 7;
+	public static final int STATE_STOPPING = 8;
 
 	static {
 		System.loadLibrary("avplayer");
@@ -81,7 +85,14 @@ public final class AVPlayer {
 		_initialize(new WeakReference<AVPlayer>(this));
 	}
 
+	@Override
+	protected void finalize() throws Throwable {
+		_finalize();
+	}
+
 	private native void _initialize(WeakReference<AVPlayer> player);
+
+	private native void _finalize();
 
 	private native int _prepare(String fileName);
 

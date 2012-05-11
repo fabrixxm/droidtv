@@ -7,6 +7,10 @@
 #define STATE_PREPARING		com_chrulri_droidtv_player_AVPlayer_STATE_PREPARING
 #define STATE_PREPARED		com_chrulri_droidtv_player_AVPlayer_STATE_PREPARED
 #define STATE_PLAYING		com_chrulri_droidtv_player_AVPlayer_STATE_PLAYING
+#define STATE_ERROR			com_chrulri_droidtv_player_AVPlayer_STATE_ERROR
+#define STATE_FINISHED		com_chrulri_droidtv_player_AVPlayer_STATE_FINISHED
+#define STATE_STARTING		com_chrulri_droidtv_player_AVPlayer_STATE_STARTING
+#define STATE_STOPPING		com_chrulri_droidtv_player_AVPlayer_STATE_STOPPING
 
 #define ERROR_UNKNOWN			(-1)
 #define OK						0
@@ -21,6 +25,7 @@
 #define ERROR_SWS_CONTEXT		9
 #define ERROR_ALLOC_FRAME		10
 #define ERROR_INVALID_BITMAP	11
+#define ERROR_INVALID_OPERATION	12
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -29,6 +34,10 @@ extern "C" {
 } // end of extern C
 
 #include <android/bitmap.h>
+#include <pthread.h>
+
+#include "AudioDecoder.h"
+#include "VideoDecoder.h"
 
 class MediaPlayerListener {
 public:
@@ -51,10 +60,18 @@ public:
 	int stop();
 	int getState();
 
+	void decodeVideo(AVFrame* frame, double pts);
+	void decodeAudio(int16_t* buffer, int size);
+
 private:
+	static void* runMainThread(void* ptr);
+
+	void decodeStream();
+
 	int mState;
 	MediaPlayerListener* mListener;
 
+	pthread_t mMainThread;
 	jobject mBitmap;
 	AndroidBitmapInfo mBitmapInfo;
 	AVFrame* mFrame;
@@ -63,6 +80,8 @@ private:
 	int mVideoStreamIndex;
 	struct SwsContext* mCtxConvert;
 
+	AudioDecoder* mAudioDecoder;
+	VideoDecoder* mVideoDecoder;
 };
 
 #endif // DROIDTV_MEDIAPLAYER_H

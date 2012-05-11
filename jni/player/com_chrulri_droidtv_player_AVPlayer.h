@@ -17,6 +17,14 @@ extern "C" {
 #define com_chrulri_droidtv_player_AVPlayer_STATE_PREPARED 3L
 #undef com_chrulri_droidtv_player_AVPlayer_STATE_PLAYING
 #define com_chrulri_droidtv_player_AVPlayer_STATE_PLAYING 4L
+#undef com_chrulri_droidtv_player_AVPlayer_STATE_ERROR
+#define com_chrulri_droidtv_player_AVPlayer_STATE_ERROR 5L
+#undef com_chrulri_droidtv_player_AVPlayer_STATE_FINISHED
+#define com_chrulri_droidtv_player_AVPlayer_STATE_FINISHED 6L
+#undef com_chrulri_droidtv_player_AVPlayer_STATE_STARTING
+#define com_chrulri_droidtv_player_AVPlayer_STATE_STARTING 7L
+#undef com_chrulri_droidtv_player_AVPlayer_STATE_STOPPING
+#define com_chrulri_droidtv_player_AVPlayer_STATE_STOPPING 8L
 /*
  * Class:     com_chrulri_droidtv_player_AVPlayer
  * Method:    _initialize
@@ -24,6 +32,14 @@ extern "C" {
  */
 JNIEXPORT void JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1initialize
   (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     com_chrulri_droidtv_player_AVPlayer
+ * Method:    _finalize
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1finalize
+  (JNIEnv *, jobject);
 
 /*
  * Class:     com_chrulri_droidtv_player_AVPlayer
