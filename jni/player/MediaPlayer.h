@@ -43,7 +43,7 @@ extern "C" {
 class MediaPlayerListener {
 public:
 	virtual ~MediaPlayerListener();
-	virtual void postAudio(int16_t* buffer, int size) = 0;
+	virtual jint postAudio(int16_t* buffer, int size) = 0;
 	virtual void postVideo() = 0;
 	virtual jboolean postPrepareAudio(int sampleRate) = 0;
 	virtual jobject postPrepareVideo(int width, int height) = 0;

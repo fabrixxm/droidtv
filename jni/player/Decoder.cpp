@@ -68,26 +68,26 @@ int Decoder::enqueue(AVPacket* packet) {
 	return 0;
 }
 
-AVPacket* Decoder::dequeue() {
-	AVPacket* packet;
+void Decoder::dequeue(AVPacket* packet) {
+	AVPacketList* pkt;
 	pthread_mutex_lock(&mQueue.mutex);
 	for (;;) {
-		if (mQueue.first == NULL) {
+		pkt = mQueue.first;
+		if (pkt == NULL) {
+			LOGD("Decoder::dequeue: empty queue, waiting...");
 			pthread_cond_wait(&mQueue.cond, &mQueue.mutex);
 		} else {
-			AVPacketList* pkt = mQueue.first;
 			mQueue.first = pkt->next;
 			if (mQueue.first == NULL) {
 				mQueue.last = NULL;
 			}
 			mQueue.size--;
-			packet = &pkt->pkt;
+			*packet = pkt->pkt;
 			av_free(pkt);
 			break;
 		}
 	}
 	pthread_mutex_unlock(&mQueue.mutex);
-	return packet;
 }
 
 void Decoder::start() {

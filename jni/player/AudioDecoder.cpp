@@ -31,19 +31,16 @@ bool AudioDecoder::process(AVPacket *packet) {
 }
 
 bool AudioDecoder::decode() {
-	AVPacket* packet;
+	AVPacket packet;
 	LOGI("decoding audio");
 	while (mRunning) {
-		if ((packet = dequeue()) == NULL) {
-			mRunning = false;
-			return false;
-		}
-		if (!process(packet)) {
+		dequeue(&packet);
+		if (!process(&packet)) {
 			mRunning = false;
 			return false;
 		}
 		// allocated by av_read_frame
-		av_free_packet(packet);
+		av_free_packet(&packet);
 	}
 	LOGI("decoding audio ended");
 	// allocated by av_malloc in ::prepare()

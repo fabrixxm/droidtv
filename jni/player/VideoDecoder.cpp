@@ -2,6 +2,10 @@
 #include "VideoDecoder.h"
 #include "utils.h"
 
+#ifndef INT64_C
+#define INT64_C __INT64_C
+#endif
+
 VideoDecoderListener::~VideoDecoderListener() {
 }
 
@@ -25,10 +29,15 @@ bool VideoDecoder::prepare() {
 }
 
 bool VideoDecoder::process(AVPacket *packet) {
+	int ret;
 	int completed;
 	int pts = 0;
 
-	avcodec_decode_video2(mStream->codec, mFrame, &completed, packet);
+	if ((ret = avcodec_decode_video2(mStream->codec, mFrame, &completed, packet))
+			< 0) {
+		LOGE("avcodec_decode_video2=%d", ret);
+		return false;
+	}
 
 	if (packet->dts == AV_NOPTS_VALUE && mFrame->opaque
 			&& *(uint64_t*) mFrame->opaque != AV_NOPTS_VALUE) {
@@ -49,21 +58,18 @@ bool VideoDecoder::process(AVPacket *packet) {
 }
 
 bool VideoDecoder::decode() {
-	AVPacket* packet;
+	AVPacket packet;
 
 	LOGI("decoding video");
 
 	while (mRunning) {
-		if ((packet = dequeue()) == NULL) {
-			mRunning = false;
-			return false;
-		}
-		if (!process(packet)) {
+		dequeue(&packet);
+		if (!process(&packet)) {
 			mRunning = false;
 			return false;
 		}
 		// allocated by av_read_frame
-		av_free_packet(packet);
+		av_free_packet(&packet);
 	}
 	LOGI("decoding video ended");
 	// allocated by av_malloc in ::prepare()

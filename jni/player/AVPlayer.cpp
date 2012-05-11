@@ -113,7 +113,7 @@ class AVPlayerListener: public MediaPlayerListener {
 public:
 	AVPlayerListener(JNIEnv* env, jobject thiz, jobject weakRef);
 	~AVPlayerListener();
-	void postAudio(int16_t* buffer, int size);
+	jint postAudio(int16_t* buffer, int size);
 	void postVideo();
 	jobject postPrepareVideo(int width, int height);
 	jboolean postPrepareAudio(int sampleRate);
@@ -132,11 +132,11 @@ AVPlayerListener::~AVPlayerListener() {
 	env->DeleteGlobalRef(mPlayer);
 }
 
-void AVPlayerListener::postAudio(int16_t* buffer, int size) {
+jint AVPlayerListener::postAudio(int16_t* buffer, int size) {
 	JNIEnv *env = getJNIEnv();
 	jshortArray jBuffer = env->NewShortArray(size);
 	env->SetShortArrayRegion(jBuffer, 0, size, buffer);
-	env->CallVoidMethod(mPlayer, fields.postAudio, jBuffer, size);
+	return env->CallIntMethod(mPlayer, fields.postAudio, jBuffer, size);
 }
 
 void AVPlayerListener::postVideo() {

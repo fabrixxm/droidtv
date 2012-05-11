@@ -26,7 +26,7 @@ public:
 	void start();
 	void stop();
 	int enqueue(AVPacket* packet);
-	AVPacket* dequeue();
+	void dequeue(AVPacket* packet);
 	int packets();
 	int wait();
 
