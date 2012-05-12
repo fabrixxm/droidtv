@@ -8,7 +8,7 @@
 class AudioDecoderListener {
 public:
 	virtual ~AudioDecoderListener();
-	virtual void decodeAudioFrame(jshortArray buffer, int size) = 0;
+	virtual void decodeAudioFrame(jbyteArray buffer, int size) = 0;
 };
 
 class AudioDecoder : public Decoder
@@ -22,7 +22,8 @@ private:
 	bool decode();
 	bool process(AVPacket* packet);
 
-	jshortArray mjSamples;
+	AVFrame* mFrame;
+	jbyteArray mjSamples;
 	int mSamplesSize;
 	AudioDecoderListener* mListener;
 };

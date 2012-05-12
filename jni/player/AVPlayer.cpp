@@ -62,7 +62,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 		return JNI_ERR;
 	}
 
-	fields.postAudio = env->GetMethodID(clazz, "postAudio", "([SI)I");
+	fields.postAudio = env->GetMethodID(clazz, "postAudio", "([BI)I");
 	if (fields.postAudio == NULL) {
 		LOGE("Can't find AVPlayer.postAudio");
 		return JNI_ERR;
@@ -113,7 +113,7 @@ class AVPlayerListener: public MediaPlayerListener {
 public:
 	AVPlayerListener(JNIEnv* env, jobject thiz);
 	~AVPlayerListener();
-	jint postAudio(jshortArray buffer, int size);
+	jint postAudio(jbyteArray buffer, int size);
 	void postVideo();
 	jobject postPrepareVideo(int width, int height);
 	jboolean postPrepareAudio(int sampleRate);
@@ -132,7 +132,7 @@ AVPlayerListener::~AVPlayerListener() {
 	env->DeleteGlobalRef(mPlayer);
 }
 
-jint AVPlayerListener::postAudio(jshortArray buffer, int size) {
+jint AVPlayerListener::postAudio(jbyteArray buffer, int size) {
 	JNIEnv *env = getJNIEnv();
 	return env->CallIntMethod(mPlayer, fields.postAudio, buffer, size);
 }

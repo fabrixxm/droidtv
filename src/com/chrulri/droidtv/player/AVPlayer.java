@@ -60,8 +60,8 @@ public final class AVPlayer {
 	private RectF mBounds = new RectF();
 	private RectF mSource = new RectF();
 
-	private SurfaceHolder mSurface;
-	private OnUpdateListener mListener;
+	private final SurfaceHolder mSurface;
+	private final OnUpdateListener mListener;
 	private String mFileName;
 
 	public AVPlayer(SurfaceHolder surface, OnUpdateListener listener) {
@@ -123,10 +123,11 @@ public final class AVPlayer {
 		final int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
 
 		try {
+			int min = AudioTrack.getMinBufferSize(sampleRate, channelConfig,
+					audioFormat);
+			Log.v(TAG, "AudioTrack.getMinBufferSize returned " + min);
 			mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate,
-					channelConfig, audioFormat, AudioTrack.getMinBufferSize(
-							sampleRate, channelConfig, audioFormat),
-					AudioTrack.MODE_STREAM);
+					channelConfig, audioFormat, min, AudioTrack.MODE_STREAM);
 		} catch (Throwable t) {
 			Log.e(TAG, "postPrepareAudio", t);
 			return false;
@@ -134,7 +135,7 @@ public final class AVPlayer {
 		return true;
 	}
 
-	private int postAudio(short[] buffer, int bufsize) {
+	private int postAudio(byte[] buffer, int bufsize) {
 		// Log.d(TAG, "postAudio");
 		return mAudioTrack.write(buffer, 0, bufsize);
 	}

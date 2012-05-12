@@ -16,21 +16,32 @@ AudioDecoder::~AudioDecoder() {
 bool AudioDecoder::prepare() {
 	mSamplesSize = AVCODEC_MAX_AUDIO_FRAME_SIZE;
 	JNIEnv* env = getJNIEnv();
-	mjSamples = env->NewShortArray(mSamplesSize);
-	if (mjSamples == NULL) {
-		// TODO error log needed?
+	if (!(mjSamples = env->NewByteArray(mSamplesSize))) {
+		LOGE(": env->NewByteArray(%d) returns NULL", mSamplesSize);
+		return false;
+	}
+	if (!(mFrame = avcodec_alloc_frame())) {
+		LOGE(": avcodec_alloc_frame returns NULL");
 		return false;
 	}
 	return true;
 }
 
 bool AudioDecoder::process(AVPacket *packet) {
-	JNIEnv* env = getJNIEnv();
-	int size = mSamplesSize;
-	jshort* samples = env->GetShortArrayElements(mjSamples, NULL);
-	avcodec_decode_audio3(mStream->codec, samples, &size, packet);
-	env->ReleaseShortArrayElements(mjSamples, samples, 0);
-	mListener->decodeAudioFrame(mjSamples, size);
+	int decoded, ret;
+	avcodec_get_frame_defaults(mFrame);
+	ret = avcodec_decode_audio4(mStream->codec, mFrame, &decoded, packet);
+	if (ret < 0) {
+		LOGE("avcodec_decode_audio4=%d", ret);
+		return true; // continue anyways.. it's not a fatal error
+	}
+	if (decoded != 0) {
+		int size = av_samples_get_buffer_size(NULL, mStream->codec->channels,
+				mFrame->nb_samples, mStream->codec->sample_fmt, 1);
+		JNIEnv* env = getJNIEnv();
+		env->SetByteArrayRegion(mjSamples, 0, size, (jbyte*) mFrame->data[0]);
+		mListener->decodeAudioFrame(mjSamples, size);
+	}
 	return true;
 }
 

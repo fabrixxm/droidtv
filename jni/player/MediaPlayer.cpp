@@ -12,7 +12,7 @@ MediaPlayerListener::~MediaPlayerListener() {
 class MediaPlayerAudioListener: public AudioDecoderListener {
 public:
 	MediaPlayerAudioListener(MediaPlayer* mp);
-	void decodeAudioFrame(jshortArray buffer, int size);
+	void decodeAudioFrame(jbyteArray buffer, int size);
 private:
 	MediaPlayer* mPlayer;
 };
@@ -21,7 +21,7 @@ MediaPlayerAudioListener::MediaPlayerAudioListener(MediaPlayer* mp) {
 	mPlayer = mp;
 }
 
-void MediaPlayerAudioListener::decodeAudioFrame(jshortArray buffer, int size) {
+void MediaPlayerAudioListener::decodeAudioFrame(jbyteArray buffer, int size) {
 	mPlayer->decodeAudio(buffer, size);
 }
 
@@ -290,6 +290,6 @@ void MediaPlayer::drawFrame(JNIEnv* env, jobject bitmap) {
 	AndroidBitmap_unlockPixels(env, bitmap);
 }
 
-void MediaPlayer::decodeAudio(jshortArray buffer, int size) {
+void MediaPlayer::decodeAudio(jbyteArray buffer, int size) {
 	mListener->postAudio(buffer, size);
 }

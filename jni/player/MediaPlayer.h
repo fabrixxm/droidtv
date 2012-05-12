@@ -39,7 +39,7 @@
 class MediaPlayerListener {
 public:
 	virtual ~MediaPlayerListener();
-	virtual jint postAudio(jshortArray buffer, int size) = 0;
+	virtual jint postAudio(jbyteArray buffer, int size) = 0;
 	virtual void postVideo() = 0;
 	virtual jboolean postPrepareAudio(int sampleRate) = 0;
 	virtual jobject postPrepareVideo(int width, int height) = 0;
@@ -59,7 +59,7 @@ public:
 	int getState();
 
 	void decodeVideo(AVFrame* frame, double pts);
-	void decodeAudio(jshortArray buffer, int size);
+	void decodeAudio(jbyteArray buffer, int size);
 
 	void drawFrame(JNIEnv* env, jobject bitmap);
 
