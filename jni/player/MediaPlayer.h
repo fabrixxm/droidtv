@@ -28,14 +28,10 @@
 #define ERROR_INVALID_TRACK		12
 #define ERROR_INVALID_OPERATION	13
 
-extern "C" {
-#include <libavformat/avformat.h>
-#include <libavcodec/avcodec.h>
-#include <libswscale/swscale.h>
-} // end of extern C
-
 #include <android/bitmap.h>
 #include <pthread.h>
+
+#include "libav.h"
 
 #include "AudioDecoder.h"
 #include "VideoDecoder.h"

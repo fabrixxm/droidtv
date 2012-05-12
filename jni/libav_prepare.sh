@@ -14,27 +14,31 @@ if [ "$ANDROID_NDK_HOME" == "" ]; then
 fi
 
 API_VERSION=8
-#APP_ABI=armv5
-APP_ABI=armv7-a
 
 PREBUILT=$ANDROID_NDK_HOME/toolchains/arm-linux-androideabi-4.4.3/prebuilt/linux-x86
 PLATFORM=$ANDROID_NDK_HOME/platforms/android-$API_VERSION/arch-arm
-GCC_ARMLIB=$PREBUILT/lib/gcc/arm-linux-androideabi/4.4.3
 
 (
 	cd libav
-	
+
 	./configure --target-os=linux \
-		--prefix=. \
 		--arch=arm \
+		--cpu=armv7-a \
+		--extra-cflags='-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16' \
+		--extra-ldflags='-Wl,--fix-cortex-a8' \
+		--cross-prefix=$PREBUILT/bin/arm-linux-androideabi- \
+		--sysroot=$PLATFORM \
+		--enable-shared \
+		--disable-static \
 		--enable-version3 \
-		--enable-gpl \
+		--enable-small \
 		--disable-protocols \
-		--enable-protocol=file \
+		--enable-protocol=file,http \
 		--disable-demuxers \
 		--enable-demuxer=mpegts \
-		--enable-avfilter \
+		--disable-filters \
 		--disable-debug \
+		--disable-doc \
 		--disable-ffmpeg \
 		--disable-avplay \
 		--disable-avconv \
@@ -44,37 +48,20 @@ GCC_ARMLIB=$PREBUILT/lib/gcc/arm-linux-androideabi/4.4.3
 		--disable-encoders \
 		--disable-muxers \
 		--disable-devices \
-		--disable-network \
-		--enable-cross-compile \
-		--cross-prefix=$PREBUILT/bin/arm-linux-androideabi- \
-		--extra-cflags="-fPIC -DANDROID -march=$APP_ABI" \
-		--extra-ldflags="-march=$APP_ABI" \
-		--sysroot=$PLATFORM \
-		--disable-asm \
-		--enable-neon \
-		--extra-ldflags="-Wl,--entry=main,-rpath-link=$PLATFORM/usr/lib -L$PLATFORM/usr/lib -nostdlib -lc"
-	
+		--disable-symver || exit 1
+
 	echo "Patch config.h"
-	
-	sed -i 's/#define restrict restrict/#define restrict/g' config.h
-	
+
 	cat << EOF >> config.h
-#undef HAVE_LRINT
-#define HAVE_LRINT 1
-#undef HAVE_LRINTF
-#define HAVE_LRINTF 1
-#undef HAVE_ROUND
-#define HAVE_ROUND 1
-#undef HAVE_TRUNC
-#define HAVE_TRUNC 1
+#undef restrict
+#define restrict
 EOF
-	
-	cp -v ../template_av.mk av.mk
+
 	cp -v ../template_libav.mk Android.mk
-	cp -v ../template_libavcodec.mk libavcodec/Android.mk
-	cp -v ../template_libavfilter.mk libavfilter/Android.mk
-	cp -v ../template_libavformat.mk libavformat/Android.mk
-	cp -v ../template_libavutil.mk libavutil/Android.mk
-	cp -v ../template_libswscale.mk libswscale/Android.mk
-	cp -v ../template_libpostproc.mk libpostproc/Android.mk
+	cp -v ../template_libav_module.mk libavcodec/Android.mk
+	cp -v ../template_libav_module.mk libavfilter/Android.mk
+	cp -v ../template_libav_module.mk libavformat/Android.mk
+	cp -v ../template_libav_module.mk libavutil/Android.mk
+	cp -v ../template_libav_module.mk libswscale/Android.mk
+	cp -v ../template_libav_module.mk libpostproc/Android.mk
 )

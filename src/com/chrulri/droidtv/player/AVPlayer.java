@@ -48,6 +48,7 @@ public final class AVPlayer {
 	public static final int STATE_STOPPING = 8;
 
 	static {
+		System.loadLibrary("av");
 		System.loadLibrary("avplayer");
 	}
 

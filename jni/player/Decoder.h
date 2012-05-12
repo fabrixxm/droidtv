@@ -1,12 +1,7 @@
 #ifndef DROIDTV_DECODER_H
 #define DROIDTV_DECODER_H
 
-extern "C" {
-
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-
-}
+#include "libav.h"
 
 #include <pthread.h>
 

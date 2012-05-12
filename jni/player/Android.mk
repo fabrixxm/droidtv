@@ -6,9 +6,9 @@ LOCAL_SRC_FILES 	:= AVPlayer.cpp \
 						Decoder.cpp \
 						AudioDecoder.cpp \
 						VideoDecoder.cpp 
-LOCAL_LDLIBS   		:= -llog -ljnigraphics -lz
+LOCAL_LDLIBS   		:= -llog -ljnigraphics
 LOCAL_CFLAGS		:= -D__STDC_CONSTANT_MACROS
-#LOCAL_CFLAGS		+= -DDEBUG
+LOCAL_CFLAGS		+= -DDEBUG
 LOCAL_C_INCLUDES	:= $(LOCAL_PATH)/../libav
-LOCAL_STATIC_LIBRARIES := libav
+LOCAL_SHARED_LIBRARIES := libav
 include $(BUILD_SHARED_LIBRARY)
