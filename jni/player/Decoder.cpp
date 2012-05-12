@@ -91,7 +91,11 @@ void Decoder::dequeue(AVPacket* packet) {
 }
 
 void Decoder::start() {
-	pthread_create(&mThread, NULL, runThread, this);
+	struct sched_param param = { 10 }; // java:Thread.MAX_PRIORITY
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setschedparam(&attr, &param);
+	pthread_create(&mThread, &attr, runThread, this);
 }
 
 void* Decoder::runThread(void* ptr) {
