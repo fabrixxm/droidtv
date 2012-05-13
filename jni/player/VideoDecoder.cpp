@@ -31,7 +31,7 @@ bool VideoDecoder::prepare() {
 bool VideoDecoder::process(AVPacket *packet) {
 	int ret;
 	int completed;
-	int pts = 0;
+	double pts = 0;
 
 	if ((ret = avcodec_decode_video2(mStream->codec, mFrame, &completed, packet))
 			< 0) {
@@ -96,21 +96,17 @@ double VideoDecoder::synchronize(AVFrame *src_frame, double pts) {
 	return pts;
 }
 
-/* These are called whenever we allocate a frame
- * buffer. We use this to store the global_pts in
- * a frame at the time it is allocated.
- */
-int VideoDecoder::getBuffer(struct AVCodecContext *c, AVFrame *pic) {
-	int ret = avcodec_default_get_buffer(c, pic);
+int VideoDecoder::getBuffer(struct AVCodecContext* codec, AVFrame* frame) {
+	int ret = avcodec_default_get_buffer(codec, frame);
 	uint64_t* pts = (uint64_t *) av_malloc(sizeof(uint64_t));
 	*pts = AV_NOPTS_VALUE;
-	pic->opaque = pts;
+	frame->opaque = pts;
 	return ret;
 }
 
-void VideoDecoder::releaseBuffer(struct AVCodecContext *c, AVFrame *pic) {
-	if (pic != NULL) {
-		av_freep(&pic->opaque);
+void VideoDecoder::releaseBuffer(struct AVCodecContext* codec, AVFrame* frame) {
+	if (frame != NULL) {
+		av_freep(&frame->opaque);
 	}
-	avcodec_default_release_buffer(c, pic);
+	avcodec_default_release_buffer(codec, frame);
 }
