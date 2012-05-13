@@ -18,8 +18,6 @@
 
 package com.chrulri.droidtv.player;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import android.graphics.Bitmap;
@@ -204,9 +202,6 @@ public final class AVPlayer {
 	}
 
 	public void prepare(String fileName) throws IOException {
-		if (fileName == null || !new File(fileName).canRead()) {
-			throw new FileNotFoundException();
-		}
 		int ret = _prepare(fileName);
 		if (ret != 0) {
 			throw new IOException("prepare[" + ret + "]");

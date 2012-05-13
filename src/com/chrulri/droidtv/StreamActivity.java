@@ -248,11 +248,11 @@ public class StreamActivity extends Activity {
 
 	private void startPlayback() {
 		try {
-			mPlayer.prepare("/sdcard/test.m2ts");
+			mPlayer.prepare(SERVICE_URL);
 			mPlayer.start();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Log.e(TAG, "startPlayback", e);
+			finish();
 		}
 	}
 
@@ -261,8 +261,7 @@ public class StreamActivity extends Activity {
 			try {
 				mPlayer.stop();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				Log.w(TAG, "stopPlayback", e);
 			}
 		}
 	}

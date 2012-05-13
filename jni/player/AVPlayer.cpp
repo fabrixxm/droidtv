@@ -45,6 +45,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 	sVm = vm;
 
 	av_register_all();
+	avformat_network_init();
 	av_log_set_callback(avlibNotify);
 
 	JNIEnv* env = getJNIEnv();
