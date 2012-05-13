@@ -34,14 +34,14 @@ JavaVM* getJVM() {
 JNIEnv* getJNIEnv() {
 	JNIEnv* env;
 	if (sVm->GetEnv((void**) &env, JNI_VERSION_1_6) != JNI_OK) {
-		LOGE("Failed to obtain JNIEnv");
+		LOGE("AVPlayer", "Failed to obtain JNIEnv");
 		return NULL;
 	}
 	return env;
 }
 
 jint JNI_OnLoad(JavaVM *vm, void *reserved) {
-	LOGI("JNI_OnLoad(..) called");
+	LOGI("AVPlayer", "JNI_OnLoad(..) called");
 	sVm = vm;
 
 	av_register_all();
@@ -51,62 +51,50 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 
 	jclass clazz = env->FindClass(CLASS_AVPLAYER);
 	if (clazz == NULL) {
-		LOGE("Can't find AVPlayer class");
+		LOGE("AVPlayer", "Can't find AVPlayer class");
 		return JNI_ERR;
 	}
 	fields.clazz = reinterpret_cast<jclass>(env->NewGlobalRef(clazz));
 
 	fields.context = env->GetFieldID(clazz, "mNativeContext", "I");
 	if (fields.context == NULL) {
-		LOGE("Can't find AVPlayer.mNativeContext");
+		LOGE("AVPlayer", "Can't find AVPlayer.mNativeContext");
 		return JNI_ERR;
 	}
 
 	fields.postAudio = env->GetMethodID(clazz, "postAudio", "([BI)I");
 	if (fields.postAudio == NULL) {
-		LOGE("Can't find AVPlayer.postAudio");
+		LOGE("AVPlayer", "Can't find AVPlayer.postAudio");
 		return JNI_ERR;
 	}
 
 	fields.postVideo = env->GetMethodID(clazz, "postVideo", "()V");
 	if (fields.postVideo == NULL) {
-		LOGE("Can't find AVPlayer.postVideo");
+		LOGE("AVPlayer", "Can't find AVPlayer.postVideo");
 		return JNI_ERR;
 	}
 
 	fields.postPrepareVideo = env->GetMethodID(clazz, "postPrepareVideo",
 			"(II)Landroid/graphics/Bitmap;");
 	if (fields.postPrepareVideo == NULL) {
-		LOGE("Can't find AVPlayer.postPrepareVideo");
+		LOGE("AVPlayer", "Can't find AVPlayer.postPrepareVideo");
 		return JNI_ERR;
 	}
 
 	fields.postPrepareAudio = env->GetMethodID(clazz, "postPrepareAudio",
 			"(I)Z");
 	if (fields.postPrepareAudio == NULL) {
-		LOGE("Can't find AVPlayer.postPrepareAudio");
+		LOGE("AVPlayer", "Can't find AVPlayer.postPrepareAudio");
 		return JNI_ERR;
 	}
 
 	fields.postNotify = env->GetMethodID(clazz, "postNotify", "(III)V");
 	if (fields.postNotify == NULL) {
-		LOGE("Can't find AVPlayer.postNotify");
+		LOGE("AVPlayer", "Can't find AVPlayer.postNotify");
 		return JNI_ERR;
 	}
 
 	return JNI_VERSION_1_6;
-}
-
-void jniThrowException(JNIEnv* env, const char* className, const char* msg) {
-	jclass exceptionClass = env->FindClass(className);
-	if (exceptionClass == NULL) {
-		LOGE("Unable to find exception class %s", className);
-		return;
-	}
-
-	if (env->ThrowNew(exceptionClass, msg) != JNI_OK) {
-		LOGE("Failed throwing '%s' '%s'", className, msg);
-	}
 }
 
 class AVPlayerListener: public MediaPlayerListener {
@@ -164,7 +152,7 @@ static MediaPlayer* getNativeContext(JNIEnv* env, jobject thiz) {
 static void freeNativeContext(JNIEnv* env, jobject thiz) {
 	MediaPlayer* old = getNativeContext(env, thiz);
 	if (old != NULL) {
-		LOGI("freeing old media player object");
+		LOGI("AVPlayer", "freeing old media player object");
 		delete old;
 	}
 }
@@ -177,7 +165,7 @@ static void setNativeContext(JNIEnv* env, jobject thiz,
 
 JNIEXPORT void JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1initialize(
 		JNIEnv *env, jobject thiz) {
-	LOGI("_initialize");
+	LOGI("AVPlayer", "_initialize");
 	MediaPlayer* mp = new MediaPlayer();
 	AVPlayerListener * listener = new AVPlayerListener(env, thiz);
 	mp->setListener(listener);
@@ -191,7 +179,7 @@ JNIEXPORT void JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1finalize(
 
 JNIEXPORT jint JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1prepare(
 		JNIEnv *env, jobject thiz, jstring jFileName) {
-	LOGI("_prepare");
+	LOGI("AVPlayer", "_prepare");
 	int ret;
 
 	const char* fileName = env->GetStringUTFChars(jFileName, NULL);
@@ -229,7 +217,7 @@ JNIEXPORT void JNICALL Java_com_chrulri_droidtv_player_AVPlayer__1drawFrame
 
 
 static void avlibNotify(void* ptr, int level, const char* fmt, va_list vl) {
-	LOGD("AVLib[%s]:",
+	LOGD("LIBAV",
 			level == AV_LOG_PANIC ? "PANIC" :
 			level == AV_LOG_FATAL ? "FATAL" :
 			level == AV_LOG_ERROR ? "ERROR" :

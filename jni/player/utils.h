@@ -5,16 +5,16 @@
 #include <android/log.h>
 
 #define LOG_TAG "AVPlayerNative"
-#define LOGE(...)	__android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
-#define LOGW(...)	__android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
+#define LOGE(TAG,...)	__android_log_print(ANDROID_LOG_ERROR,LOG_TAG "::" TAG,__VA_ARGS__)
+#define LOGW(TAG,...)	__android_log_print(ANDROID_LOG_WARN,LOG_TAG "::" TAG,__VA_ARGS__)
 #ifdef DEBUG
-#define LOGD(...)	__android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
-#define LOGDAV(...)	__android_log_vprint(ANDROID_LOG_DEBUG,LOG_TAG "::avlib",__VA_ARGS__)
-#define LOGI(...)	__android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
+#define LOGD(TAG,...)	__android_log_print(ANDROID_LOG_DEBUG,LOG_TAG "::" TAG,__VA_ARGS__)
+#define LOGDAV(...)		LOGD("LIBAV",__VA_ARGS__)
+#define LOGI(TAG,...)	__android_log_print(ANDROID_LOG_INFO,LOG_TAG "::" TAG,__VA_ARGS__)
 #else
-#define LOGD(...)	((void)0)
-#define LOGDAV(...)	((void)0)
-#define LOGI(...)	((void)0)
+#define LOGD(TAG,...)	((void)0)
+#define LOGDAV(TAG,...)	((void)0)
+#define LOGI(TAG,...)	((void)0)
 #endif
 
 JavaVM* getJVM();
