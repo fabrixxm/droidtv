@@ -4,7 +4,7 @@
 #include "MediaPlayer.h"
 #include "utils.h"
 
-#define MAX_QUEUE_SIZE 300
+#define MAX_QUEUE_SIZE (15 * 1024 * 1024) // taken from avplay.c
 
 MediaPlayerListener::~MediaPlayerListener() {
 }
@@ -230,13 +230,19 @@ void MediaPlayer::decodeStream() {
 	while (mState == STATE_PLAYING) {
 		if (mVideoDecoder->packets() > MAX_QUEUE_SIZE
 				&& mAudioDecoder->packets() > MAX_QUEUE_SIZE) {
-			//LOGI("packets() > MAX_QUEUE_SIZE");
+			LOGI("packets() > MAX_QUEUE_SIZE");
 			usleep(200);
 			continue;
 		}
 
-		if (av_read_frame(mInputFile, &packet) < 0) {
-			continue;
+		if ((ret = av_read_frame(mInputFile, &packet)) < 0) {
+			if (ret == AVERROR_EOF) {
+				mState = STATE_FINISHED;
+			} else {
+				LOGW("av_read_frame=%d", ret);
+				usleep(200);
+				continue;
+			}
 		}
 
 		// determine packet type

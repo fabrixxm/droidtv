@@ -32,6 +32,10 @@ bool AudioDecoder::process(AVPacket *packet) {
 	avcodec_get_frame_defaults(mFrame);
 	ret = avcodec_decode_audio4(mStream->codec, mFrame, &decoded, packet);
 	if (ret < 0) {
+		if (ret == AVERROR_INVALIDDATA) {
+			LOGW("avcodec_decode_audio4=AVERROR_INVALIDDATA, abort.");
+			return false;
+		}
 		LOGE("avcodec_decode_audio4=%d", ret);
 		return true; // continue anyways.. it's not a fatal error
 	}
