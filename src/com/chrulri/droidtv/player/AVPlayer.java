@@ -48,6 +48,16 @@ public final class AVPlayer {
 	public static final int STATE_STOPPING = 8;
 
 	static {
+//		int cpuFeatures = SystemUtils.getCpuFeatures();
+//		// load optimized avlib
+//		if((cpuFeatures & SystemUtils.ANDROID_CPU_ARM_FEATURE_NEON) != 0) {
+//			System.loadLibrary("av_neon");
+//		} else if((cpuFeatures & SystemUtils.ANDROID_CPU_ARM_FEATURE_VFPv3) != 0) {
+//			System.loadLibrary("av_vfpv3");
+//		} else {
+//			// unsupported architecture
+//			throw new RuntimeException("Unsupported CPU architecture");
+//		}
 		System.loadLibrary("av");
 		System.loadLibrary("avplayer");
 	}
@@ -150,15 +160,46 @@ public final class AVPlayer {
 		// TODO implement
 	}
 
+	private static long vLIMIT = 10;
+	private long vTotal = 0;
+	private long vTimer = 0;
+	private long vTimer2 = 0;
+	private long vTimer3 = 0;
+	private int vCounter = 0;
+
 	private void performRender() {
 		if (mBitmap != null) {
+			Log.d(TAG, "performRender::SINCE LAST::"+(System.currentTimeMillis() - vTimer3)+"ms");
+			/*** >>TIMING ***/
+			if (vCounter == vLIMIT) {
+				long total = System.currentTimeMillis() - vTotal;
+				Log.d(TAG, "performRender::" + (vTimer / vLIMIT)
+						+ "ms (inner: " + (vTimer2 / vLIMIT) + "ms), "
+						+ "TOTAL: " + total + "ms");
+				vCounter = 0;
+				vTimer = 0;
+				vTimer2 = 0;
+				vTotal = System.currentTimeMillis();
+			} else if (vCounter == 0) {
+				vTotal = System.currentTimeMillis();
+			}
+			long timer = System.currentTimeMillis();
+			/*** <<TIMING ***/
 			_drawFrame(mBitmap);
+			/*** >>TIMING ***/
+			vTimer2 += System.currentTimeMillis() - timer;
+			/*** <<TIMING ***/
 			Canvas c = mSurface.lockCanvas();
 			if (c != null) {
 				c.drawPaint(new Paint());
 				c.drawBitmap(mBitmap, mMatrix, null);
 				mSurface.unlockCanvasAndPost(c);
 			}
+			/*** >>TIMING ***/
+			vTimer += System.currentTimeMillis() - timer;
+			vCounter++;
+			vTimer3 = System.currentTimeMillis();
+			/*** <<TIMING ***/
 		}
 	}
 
