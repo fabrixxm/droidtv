@@ -5,7 +5,6 @@
 #include "utils.h"
 
 #define MAX_QUEUE_SIZE (15 * 1024 * 1024) // taken from avplay.c
-
 MediaPlayerListener::~MediaPlayerListener() {
 }
 
@@ -135,7 +134,8 @@ int MediaPlayer::prepare(JNIEnv *env, const char* fileName) {
 	mVideoWidth = codec_ctx->width;
 	mVideoHeight = codec_ctx->height;
 	//duration =  mInputFile->duration;
-	LOGD("MediaPlayer::prepare", "input:%dx%d@%d", mVideoWidth, mVideoHeight, mInputFile->duration);
+	LOGD("MediaPlayer::prepare",
+			"input:%dx%d@%d", mVideoWidth, mVideoHeight, mInputFile->duration);
 
 	jobject bitmap = mListener->postPrepareVideo(mVideoWidth, mVideoHeight);
 
@@ -146,7 +146,8 @@ int MediaPlayer::prepare(JNIEnv *env, const char* fileName) {
 
 	AndroidBitmapInfo bitmapInfo;
 	if ((ret = AndroidBitmap_getInfo(env, bitmap, &bitmapInfo))) {
-		LOGE("MediaPlayer::prepare", "AndroidBitmap_getInfo(..) failed: 0x%x", ret);
+		LOGE("MediaPlayer::prepare",
+				"AndroidBitmap_getInfo(..) failed: 0x%x", ret);
 		return ERROR_INVALID_BITMAP;
 	}
 
@@ -267,12 +268,23 @@ void MediaPlayer::decodeVideo(AVFrame* frame, double pts) {
 
 void MediaPlayer::drawFrame(JNIEnv* env, jobject bitmap) {
 	uint16_t* pixels;
-	AndroidBitmap_lockPixels(env, bitmap, (void**)&pixels);
+	int ret;
+
+	ret = AndroidBitmap_lockPixels(env, bitmap, (void**) &pixels);
+	if (ret < 0) {
+		LOGE("MediaPlayer::drawFrame", "AndroidBitmap_lockPixels=%d", ret);
+		return;
+	}
 
 	// convert to RGB565
-	yuv420_2_rgb565(pixels, mFrame->data[0], mFrame->data[1], mFrame->data[2], mVideoWidth, mVideoHeight, mFrame->linesize[0], mFrame->linesize[1], mVideoWidth, yuv2rgb565_table, 0);
+	yuv420_2_rgb565(pixels, mFrame->data[0], mFrame->data[1], mFrame->data[2],
+			mVideoWidth, mVideoHeight, mFrame->linesize[0], mFrame->linesize[1],
+			mVideoWidth, yuv2rgb565_table, 0);
 
-	AndroidBitmap_unlockPixels(env, bitmap);
+	ret = AndroidBitmap_unlockPixels(env, bitmap);
+	if (ret < 0) {
+		LOGE("MediaPlayer::drawFrame", "AndroidBitmap_unlockPixels=%d", ret);
+	}
 }
 
 void MediaPlayer::decodeAudio(jbyteArray buffer, int size) {

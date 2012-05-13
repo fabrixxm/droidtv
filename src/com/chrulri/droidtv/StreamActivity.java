@@ -45,6 +45,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import android.app.Activity;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -104,8 +105,8 @@ public class StreamActivity extends Activity {
 	static final String UDP_IP = "127.0.0.1";
 	static final int UDP_PORT = 1555;
 
-    // static final String HTTP_IP = "0.0.0.0"; // debug
-    static final String HTTP_IP = "127.0.0.1";
+	// static final String HTTP_IP = "0.0.0.0"; // debug
+	static final String HTTP_IP = "127.0.0.1";
 	static final int HTTP_PORT = 1666;
 	static final String HTTP_HEADER = "HTTP/1.1 200 OK" + NEWLINE
 			+ "Content-Type: video/mp2t" + NEWLINE + "Connection: keep-alive"
@@ -247,13 +248,38 @@ public class StreamActivity extends Activity {
 	}
 
 	private void startPlayback() {
-		try {
-			mPlayer.prepare(SERVICE_URL);
-			mPlayer.start();
-		} catch (IOException e) {
-			Log.e(TAG, "startPlayback", e);
-			finish();
-		}
+		new AsyncTask<Void, Void, Boolean>() {
+			@Override
+			protected Boolean doInBackground(Void... params) {
+				try {
+					while (mFrontendStatus == null
+							|| (mFrontendStatus.status & FrontendStatus.HAS_LOCK) == 0) {
+						Thread.sleep(100);
+					}
+					mPlayer.prepare(SERVICE_URL);
+					return true;
+				} catch (InterruptedException e) {
+				} catch (IOException e) {
+					Log.e(TAG, "prepare", e);
+					finish();
+				}
+				return false;
+			}
+
+			@Override
+			protected void onPostExecute(Boolean result) {
+				if (!result) {
+					return;
+				}
+				// start playback
+				try {
+					mPlayer.start();
+				} catch (IOException e) {
+					Log.e(TAG, "startPlayback", e);
+					finish();
+				}
+			}
+		}.execute();
 	}
 
 	private void stopPlayback() {

@@ -145,6 +145,10 @@ public final class AVPlayer {
 
 	private int postAudio(byte[] buffer, int bufsize) {
 		// Log.d(TAG, "postAudio");
+		if (mAudioTrack.getPlayState() != AudioTrack.PLAYSTATE_PLAYING) {
+			Log.w(TAG, "postAudio, restarted audio track");
+			mAudioTrack.play();
+		}
 		return mAudioTrack.write(buffer, 0, bufsize);
 	}
 
@@ -158,46 +162,15 @@ public final class AVPlayer {
 		// TODO implement
 	}
 
-	private static long vLIMIT = 10;
-	private long vTotal = 0;
-	private long vTimer = 0;
-	private long vTimer2 = 0;
-	private long vTimer3 = 0;
-	private int vCounter = 0;
-
 	private void performRender() {
 		if (mBitmap != null) {
-			Log.d(TAG, "performRender::SINCE LAST::"+(System.currentTimeMillis() - vTimer3)+"ms");
-			/*** >>TIMING ***/
-			if (vCounter == vLIMIT) {
-				long total = System.currentTimeMillis() - vTotal;
-				Log.d(TAG, "performRender::" + (vTimer / vLIMIT)
-						+ "ms (inner: " + (vTimer2 / vLIMIT) + "ms), "
-						+ "TOTAL: " + total + "ms");
-				vCounter = 0;
-				vTimer = 0;
-				vTimer2 = 0;
-				vTotal = System.currentTimeMillis();
-			} else if (vCounter == 0) {
-				vTotal = System.currentTimeMillis();
-			}
-			long timer = System.currentTimeMillis();
-			/*** <<TIMING ***/
 			_drawFrame(mBitmap);
-			/*** >>TIMING ***/
-			vTimer2 += System.currentTimeMillis() - timer;
-			/*** <<TIMING ***/
 			Canvas c = mSurface.lockCanvas();
 			if (c != null) {
 				c.drawPaint(new Paint());
 				c.drawBitmap(mBitmap, mMatrix, null);
 				mSurface.unlockCanvasAndPost(c);
 			}
-			/*** >>TIMING ***/
-			vTimer += System.currentTimeMillis() - timer;
-			vCounter++;
-			vTimer3 = System.currentTimeMillis();
-			/*** <<TIMING ***/
 		}
 	}
 
@@ -222,12 +195,12 @@ public final class AVPlayer {
 	}
 
 	public void stop() throws IOException {
-		mAudioTrack.stop();
 		// TODO check if current state is valid
 		int ret = _stop();
 		if (ret != 0) {
 			throw new IOException("stop[" + ret + "]");
 		}
+		mAudioTrack.stop();
 	}
 
 	public boolean isPlaying() {

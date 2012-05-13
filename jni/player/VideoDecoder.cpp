@@ -32,11 +32,15 @@ bool VideoDecoder::process(AVPacket *packet) {
 	int ret;
 	int completed;
 	double pts = 0;
-
-	if ((ret = avcodec_decode_video2(pStream->codec, mFrame, &completed, packet))
-			< 0) {
-		LOGE("VideoDecoder::process", "avcodec_decode_video2=%d", ret);
-		return false;
+	ret = avcodec_decode_video2(pStream->codec, mFrame, &completed, packet);
+	if (ret < 0) {
+		if (ret == AVERROR_INVALIDDATA) {
+			LOGD("VideoDecoder::process",
+					"avcodec_decode_video2=AVERROR_INVALIDDATA, be strong!");
+			return true;
+		}
+		LOGW("VideoDecoder::process", "avcodec_decode_video2=%d", ret);
+		return true; // continue anyways.. it's not a fatal error
 	}
 
 	if (packet->dts == AV_NOPTS_VALUE && mFrame->opaque
@@ -54,7 +58,7 @@ bool VideoDecoder::process(AVPacket *packet) {
 		mListener->decodeVideoFrame(mFrame, pts);
 		return true;
 	}
-	return false;
+	return true;
 }
 
 void VideoDecoder::decode() {

@@ -17,7 +17,8 @@ bool AudioDecoder::prepare() {
 	mSamplesSize = AVCODEC_MAX_AUDIO_FRAME_SIZE;
 	JNIEnv* env = getJNIEnv();
 	if (!(mjSamples = env->NewByteArray(mSamplesSize))) {
-		LOGE("AudioDecoder::prepare", "env->NewByteArray(%d) returns NULL", mSamplesSize);
+		LOGE("AudioDecoder::prepare",
+				"env->NewByteArray(%d) returns NULL", mSamplesSize);
 		return false;
 	}
 	if (!(mFrame = avcodec_alloc_frame())) {
@@ -33,13 +34,14 @@ bool AudioDecoder::process(AVPacket *packet) {
 	ret = avcodec_decode_audio4(pStream->codec, mFrame, &decoded, packet);
 	if (ret < 0) {
 		if (ret == AVERROR_INVALIDDATA) {
-			LOGW("AudioDecoder::process", "avcodec_decode_audio4=AVERROR_INVALIDDATA, abort.");
-			return false;
+			LOGD("AudioDecoder::process",
+					"avcodec_decode_audio4=AVERROR_INVALIDDATA, be strong!");
+			return true;
 		}
-		LOGE("AudioDecoder::process", "avcodec_decode_audio4=%d", ret);
+		LOGW("AudioDecoder::process", "avcodec_decode_audio4=%d", ret);
 		return true; // continue anyways.. it's not a fatal error
 	}
-	if (decoded != 0) {
+	if (decoded) {
 		int size = av_samples_get_buffer_size(NULL, pStream->codec->channels,
 				mFrame->nb_samples, pStream->codec->sample_fmt, 1);
 		JNIEnv* env = getJNIEnv();
