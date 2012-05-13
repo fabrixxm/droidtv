@@ -64,13 +64,13 @@ int MediaPlayer::prepare(JNIEnv *env, const char* fileName) {
 
 	// open file
 	if ((ret = avformat_open_input(&mInputFile, fileName, NULL, NULL)) != 0) {
-		LOGE("avformat_open_input=%d", ret);
+		LOGE("MediaPlayer::prepare", "avformat_open_input=%d", ret);
 		return ERROR_OPEN;
 	}
 
 	// get stream information
 	if ((ret = avformat_find_stream_info(mInputFile, NULL)) < 0) {
-		LOGE("avformat_find_stream_info=%d", ret);
+		LOGE("MediaPlayer::prepare", "avformat_find_stream_info=%d", ret);
 		return ERROR_PARSE;
 	}
 
@@ -99,7 +99,7 @@ int MediaPlayer::prepare(JNIEnv *env, const char* fileName) {
 	}
 
 	if ((ret = avcodec_open2(codec_ctx, codec, NULL)) < 0) {
-		LOGE("avcodec_open2=%d", ret);
+		LOGE("MediaPlayer::prepare", "avcodec_open2=%d", ret);
 		return ERROR_AUDIO_CODEC;
 	}
 
@@ -128,30 +128,30 @@ int MediaPlayer::prepare(JNIEnv *env, const char* fileName) {
 	}
 
 	if (avcodec_open2(codec_ctx, codec, NULL) < 0) {
-		LOGE("avcodec_open2=%d", ret);
+		LOGE("MediaPlayer::prepare", "avcodec_open2=%d", ret);
 		return ERROR_VIDEO_CODEC;
 	}
 
 	mVideoWidth = codec_ctx->width;
 	mVideoHeight = codec_ctx->height;
 	//duration =  mInputFile->duration;
-	LOGD("input:%dx%d@%d", mVideoWidth, mVideoHeight, mInputFile->duration);
+	LOGD("MediaPlayer::prepare", "input:%dx%d@%d", mVideoWidth, mVideoHeight, mInputFile->duration);
 
 	jobject bitmap = mListener->postPrepareVideo(mVideoWidth, mVideoHeight);
 
 	if (bitmap == NULL) {
-		LOGE("Bitmap is NULL");
+		LOGE("MediaPlayer::prepare", "Bitmap is NULL");
 		return ERROR_INVALID_BITMAP;
 	}
 
 	AndroidBitmapInfo bitmapInfo;
 	if ((ret = AndroidBitmap_getInfo(env, bitmap, &bitmapInfo))) {
-		LOGE("AndroidBitmap_getInfo(..) failed: 0x%x", ret);
+		LOGE("MediaPlayer::prepare", "AndroidBitmap_getInfo(..) failed: 0x%x", ret);
 		return ERROR_INVALID_BITMAP;
 	}
 
 	if (bitmapInfo.format != ANDROID_BITMAP_FORMAT_RGB_565) {
-		LOGE("Bitmap format is not RGB_565!");
+		LOGE("MediaPlayer::prepare", "Bitmap format is not RGB_565!");
 		return ERROR_INVALID_BITMAP;
 	}
 
@@ -186,10 +186,10 @@ int MediaPlayer::getState() {
 }
 
 void* MediaPlayer::runMainThread(void* ptr) {
-	LOGI("starting main thread");
+	LOGI("MediaPlayer", "starting main thread");
 	MediaPlayer* player = (MediaPlayer*) ptr;
 	player->decodeStream();
-	LOGI("ending main thread");
+	LOGI("MediaPlayer", "ending main thread");
 	return NULL;
 }
 
@@ -214,16 +214,17 @@ void MediaPlayer::decodeStream() {
 	while (mState == STATE_PLAYING) {
 		if (mVideoDecoder->packets() > MAX_QUEUE_SIZE
 				&& mAudioDecoder->packets() > MAX_QUEUE_SIZE) {
-			LOGI("packets() > MAX_QUEUE_SIZE");
+			LOGW("MediaPlayer::decodeStream", "packets() > MAX_QUEUE_SIZE");
 			usleep(200);
 			continue;
 		}
 
 		if ((ret = av_read_frame(mInputFile, &packet)) < 0) {
 			if (ret == AVERROR_EOF) {
+				LOGI("MediaPlayer::decodeStream", "av_read_frame=EOF");
 				mState = STATE_FINISHED;
 			} else {
-				LOGW("av_read_frame=%d", ret);
+				LOGW("MediaPlayer::decodeStream", "av_read_frame=%d", ret);
 				usleep(200);
 				continue;
 			}
@@ -232,12 +233,12 @@ void MediaPlayer::decodeStream() {
 		// determine packet type
 		if (packet.stream_index == mVideoStreamIndex) {
 			if ((ret = mVideoDecoder->enqueue(&packet)) != 0) {
-				// TODO log error
+				LOGE("MediaPlayer::decodeStream", "VideoDecoder::err=", ret);
 				mState = STATE_ERROR;
 			}
 		} else if (packet.stream_index == mAudioStreamIndex) {
 			if ((ret = mAudioDecoder->enqueue(&packet)) != 0) {
-				// TODO log error
+				LOGE("MediaPlayer::decodeStream", "AudioDecoder::err=", ret);
 				mState = STATE_ERROR;
 			}
 		} else {
@@ -253,10 +254,10 @@ void MediaPlayer::decodeStream() {
 	delete mAudioDecoder;
 
 	if (mState == STATE_ERROR) {
-		// TODO special handling?
+		LOGW("MediaPlayer::decodeStream", "MediaPlayer ended with error");
 	}
 	mState = STATE_FINISHED;
-	LOGI("end of playing");
+	LOGI("MediaPlayer", "end of playing");
 }
 
 void MediaPlayer::decodeVideo(AVFrame* frame, double pts) {
@@ -269,7 +270,7 @@ void MediaPlayer::drawFrame(JNIEnv* env, jobject bitmap) {
 	AndroidBitmap_lockPixels(env, bitmap, (void**)&pixels);
 
 	// convert to RGB565
-	yuv420_2_rgb565(pixels, mFrame->data[0], mFrame->data[2], mFrame->data[1], mVideoWidth, mVideoHeight, mFrame->linesize[0], mFrame->linesize[1], mVideoWidth, yuv2rgb565_table, 0);
+	yuv420_2_rgb565(pixels, mFrame->data[0], mFrame->data[1], mFrame->data[2], mVideoWidth, mVideoHeight, mFrame->linesize[0], mFrame->linesize[1], mVideoWidth, yuv2rgb565_table, 0);
 
 	AndroidBitmap_unlockPixels(env, bitmap);
 }

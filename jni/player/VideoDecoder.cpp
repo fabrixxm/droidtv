@@ -35,7 +35,7 @@ bool VideoDecoder::process(AVPacket *packet) {
 
 	if ((ret = avcodec_decode_video2(pStream->codec, mFrame, &completed, packet))
 			< 0) {
-		LOGE("avcodec_decode_video2=%d", ret);
+		LOGE("VideoDecoder::process", "avcodec_decode_video2=%d", ret);
 		return false;
 	}
 
@@ -61,14 +61,14 @@ void VideoDecoder::decode() {
 	AVPacket packet;
 	bool ok = true;
 
-	LOGI("decoding video");
+	LOGI("VideoDecoder", "decoding video");
 	while (ok && !pAbort) {
 		dequeue(&packet);
 		ok = process(&packet);
 		// allocated by av_read_frame
 		av_free_packet(&packet);
 	}
-	LOGI("decoding video ended");
+	LOGI("VideoDecoder", "decoding video ended");
 	// allocated by av_malloc in ::prepare()
 	av_free(mFrame);
 }

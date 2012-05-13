@@ -39,13 +39,13 @@ int Decoder::packets() {
 int Decoder::enqueue(AVPacket* packet) {
 	int ret;
 	if ((ret = av_dup_packet(packet)) < 0) {
-		LOGE("Decoder::enqueue=%d", ret);
+		LOGE("Decoder::enqueue", "err=%d", ret);
 		return -1; // TODO specify error
 	}
 
 	AVPacketList* pkt = (AVPacketList *) av_malloc(sizeof(AVPacketList));
 	if (pkt == NULL) {
-		LOGE("Couldn't allocate AVPacketList");
+		LOGE("Decoder::enqueue", "Couldn't allocate AVPacketList");
 		return -1; // TODO specify error
 	}
 
@@ -74,7 +74,7 @@ void Decoder::dequeue(AVPacket* packet) {
 	for (;;) {
 		pkt = mQueue.first;
 		if (pkt == NULL) {
-			LOGD("Decoder::dequeue: empty queue, waiting...");
+			LOGD("Decoder::dequeue", "empty queue, waiting...");
 			pthread_cond_wait(&mQueue.cond, &mQueue.mutex);
 		} else {
 			mQueue.first = pkt->next;
@@ -101,16 +101,16 @@ void Decoder::start() {
 void* Decoder::runThread(void* ptr) {
 	JNIEnv *env;
 	getJVM()->AttachCurrentThread(&env, NULL);
-	LOGI("starting decoder thread");
+	LOGD("Decoder", "starting decoder thread");
 	Decoder* decoder = (Decoder*) ptr;
 	decoder->mRunning = true;
 	if (decoder->prepare()) {
 		decoder->decode();
 	} else {
-		LOGE("Couldn't prepare decoder");
+		LOGE("Decoder", "Couldn't prepare decoder");
 	}
 	decoder->mRunning = false;
-	LOGI("decoder thread ended");
+	LOGD("Decoder", "decoder thread ended");
 	getJVM()->DetachCurrentThread();
 	return NULL;
 }
@@ -125,10 +125,9 @@ void Decoder::stop() {
 	pthread_cond_signal(&mQueue.cond);
 	pthread_mutex_unlock(&mQueue.mutex);
 
-	LOGI("waiting on end of decoder thread");
 	int ret;
 	if ((ret = wait()) != 0) {
-		LOGE("Couldn't cancel decoder thread: %i", ret);
+		LOGE("Decoder::stop", "Couldn't cancel decoder thread: %i", ret);
 		return;
 	}
 }
