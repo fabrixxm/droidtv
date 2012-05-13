@@ -11,8 +11,8 @@ VideoDecoderListener::~VideoDecoderListener() {
 
 VideoDecoder::VideoDecoder(AVStream* stream, VideoDecoderListener* listener) :
 		Decoder(stream) {
-	mStream->codec->get_buffer = getBuffer;
-	mStream->codec->release_buffer = releaseBuffer;
+	pStream->codec->get_buffer = getBuffer;
+	pStream->codec->release_buffer = releaseBuffer;
 	mListener = listener;
 }
 
@@ -33,7 +33,7 @@ bool VideoDecoder::process(AVPacket *packet) {
 	int completed;
 	double pts = 0;
 
-	if ((ret = avcodec_decode_video2(mStream->codec, mFrame, &completed, packet))
+	if ((ret = avcodec_decode_video2(pStream->codec, mFrame, &completed, packet))
 			< 0) {
 		LOGE("avcodec_decode_video2=%d", ret);
 		return false;
@@ -47,7 +47,7 @@ bool VideoDecoder::process(AVPacket *packet) {
 	} else {
 		pts = 0;
 	}
-	pts *= av_q2d(mStream->time_base);
+	pts *= av_q2d(pStream->time_base);
 
 	if (completed) {
 		pts = synchronize(mFrame, pts);
@@ -57,24 +57,20 @@ bool VideoDecoder::process(AVPacket *packet) {
 	return false;
 }
 
-bool VideoDecoder::decode() {
+void VideoDecoder::decode() {
 	AVPacket packet;
+	bool ok = true;
 
 	LOGI("decoding video");
-
-	while (mRunning) {
+	while (ok && !pAbort) {
 		dequeue(&packet);
-		if (!process(&packet)) {
-			mRunning = false;
-			return false;
-		}
+		ok = process(&packet);
 		// allocated by av_read_frame
 		av_free_packet(&packet);
 	}
 	LOGI("decoding video ended");
 	// allocated by av_malloc in ::prepare()
 	av_free(mFrame);
-	return true;
 }
 
 double VideoDecoder::synchronize(AVFrame *src_frame, double pts) {
@@ -89,7 +85,7 @@ double VideoDecoder::synchronize(AVFrame *src_frame, double pts) {
 		pts = mVideoClock;
 	}
 	/* update the video clock */
-	frame_delay = av_q2d(mStream->codec->time_base);
+	frame_delay = av_q2d(pStream->codec->time_base);
 	/* if we are repeating a frame, adjust clock accordingly */
 	frame_delay += src_frame->repeat_pict * (frame_delay * 0.5);
 	mVideoClock += frame_delay;

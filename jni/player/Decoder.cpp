@@ -4,8 +4,8 @@
 #include <pthread.h>
 
 Decoder::Decoder(AVStream* stream) {
-	mStream = stream;
-	mAbort = false;
+	pStream = stream;
+	pAbort = false;
 	mRunning = false;
 	pthread_mutex_init(&mQueue.mutex, NULL);
 	pthread_cond_init(&mQueue.cond, NULL);
@@ -19,7 +19,7 @@ Decoder::~Decoder() {
 		stop();
 	}
 
-	avcodec_close(mStream->codec);
+	avcodec_close(pStream->codec);
 	pthread_mutex_destroy(&mQueue.mutex);
 	pthread_cond_destroy(&mQueue.cond);
 
@@ -116,8 +116,12 @@ void* Decoder::runThread(void* ptr) {
 }
 
 void Decoder::stop() {
+	if(!mRunning) {
+		return;
+	}
+
 	pthread_mutex_lock(&mQueue.mutex);
-	mAbort = true;
+	pAbort = true;
 	pthread_cond_signal(&mQueue.cond);
 	pthread_mutex_unlock(&mQueue.mutex);
 

@@ -19,7 +19,7 @@ public:
 
 private:
 	bool prepare();
-	bool decode();
+	void decode();
 	bool process(AVPacket* packet);
 
 	AVFrame* mFrame;

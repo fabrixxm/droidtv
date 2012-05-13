@@ -19,7 +19,7 @@ private:
 	static void releaseBuffer(struct AVCodecContext *c, AVFrame *pic);
 
 	bool prepare();
-	bool decode();
+	void decode();
 	bool process(AVPacket *packet);
 	double synchronize(AVFrame *src_frame, double pts);
 

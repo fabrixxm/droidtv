@@ -30,7 +30,7 @@ bool AudioDecoder::prepare() {
 bool AudioDecoder::process(AVPacket *packet) {
 	int decoded, ret;
 	avcodec_get_frame_defaults(mFrame);
-	ret = avcodec_decode_audio4(mStream->codec, mFrame, &decoded, packet);
+	ret = avcodec_decode_audio4(pStream->codec, mFrame, &decoded, packet);
 	if (ret < 0) {
 		if (ret == AVERROR_INVALIDDATA) {
 			LOGW("avcodec_decode_audio4=AVERROR_INVALIDDATA, abort.");
@@ -40,8 +40,8 @@ bool AudioDecoder::process(AVPacket *packet) {
 		return true; // continue anyways.. it's not a fatal error
 	}
 	if (decoded != 0) {
-		int size = av_samples_get_buffer_size(NULL, mStream->codec->channels,
-				mFrame->nb_samples, mStream->codec->sample_fmt, 1);
+		int size = av_samples_get_buffer_size(NULL, pStream->codec->channels,
+				mFrame->nb_samples, pStream->codec->sample_fmt, 1);
 		JNIEnv* env = getJNIEnv();
 		env->SetByteArrayRegion(mjSamples, 0, size, (jbyte*) mFrame->data[0]);
 		mListener->decodeAudioFrame(mjSamples, size);
@@ -49,18 +49,18 @@ bool AudioDecoder::process(AVPacket *packet) {
 	return true;
 }
 
-bool AudioDecoder::decode() {
+void AudioDecoder::decode() {
 	AVPacket packet;
+	bool ok = true;
+
 	LOGI("decoding audio");
-	while (mRunning) {
+	while (ok && !pAbort) {
 		dequeue(&packet);
-		if (!process(&packet)) {
-			mRunning = false;
-			return false;
-		}
+		ok = process(&packet);
 		// allocated by av_read_frame
 		av_free_packet(&packet);
 	}
 	LOGI("decoding audio ended");
-	return true;
+	// allocated by av_malloc in ::prepare()
+	av_free(mFrame);
 }

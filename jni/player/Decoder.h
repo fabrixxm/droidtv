@@ -26,19 +26,19 @@ public:
 	int wait();
 
 protected:
-	PacketQueue mQueue;
-	AVStream* mStream;
-	bool mRunning;
+	AVStream* pStream;
+	bool pAbort;
 
 	virtual bool prepare() = 0;
-	virtual bool decode() = 0;
+	virtual void decode() = 0;
 	virtual bool process(AVPacket *packet) = 0;
 
 private:
 	static void* runThread(void*);
 
+	PacketQueue mQueue;
 	pthread_t mThread;
-	bool mAbort;
+	bool mRunning;
 };
 
 #endif // DROIDTV_DECODER_H
