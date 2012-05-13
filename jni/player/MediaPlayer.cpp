@@ -45,7 +45,6 @@ MediaPlayer::MediaPlayer() {
 	mState = STATE_UNINITIALIZED;
 	mListener = NULL;
 	mFrame = NULL;
-	mCtxConvert = NULL;
 	mAudioStreamIndex = 0;
 	mVideoStreamIndex = 0;
 	mInputFile = NULL;
@@ -55,9 +54,7 @@ MediaPlayer::~MediaPlayer() {
 	if (mListener != NULL) {
 		delete mListener;
 	}
-	av_free(mFrame);
 	avformat_free_context(mInputFile);
-	sws_freeContext(mCtxConvert);
 }
 
 int MediaPlayer::prepare(JNIEnv *env, const char* fileName) {
@@ -139,19 +136,6 @@ int MediaPlayer::prepare(JNIEnv *env, const char* fileName) {
 	mVideoHeight = codec_ctx->height;
 	//duration =  mInputFile->duration;
 	LOGD("input:%dx%d@%d", mVideoWidth, mVideoHeight, mInputFile->duration);
-
-	mCtxConvert = sws_getContext(stream->codec->width, stream->codec->height,
-			stream->codec->pix_fmt, stream->codec->width, stream->codec->height,
-			PIX_FMT_RGB565, SWS_POINT, NULL, NULL, NULL);
-
-	if (mCtxConvert == NULL) {
-		return ERROR_SWS_CONTEXT;
-	}
-
-	mFrame = avcodec_alloc_frame();
-	if (mFrame == NULL) {
-		return ERROR_ALLOC_FRAME;
-	}
 
 	jobject bitmap = mListener->postPrepareVideo(mVideoWidth, mVideoHeight);
 
@@ -262,16 +246,11 @@ void MediaPlayer::decodeStream() {
 		}
 	}
 
-	// wait for worker threads
-	LOGI("waiting on video thread");
-	if ((ret = mVideoDecoder->wait()) != 0) {
-		LOGE("Couldn't cancel video thread: %i", ret);
-	}
-
-	LOGI("waiting on audio thread");
-	if ((ret = mAudioDecoder->wait()) != 0) {
-		LOGE("Couldn't cancel audio thread: %i", ret);
-	}
+	// stop worker threads
+	mVideoDecoder->stop();
+	delete mVideoDecoder;
+	mAudioDecoder->stop();
+	delete mAudioDecoder;
 
 	if (mState == STATE_ERROR) {
 		// TODO special handling?
@@ -281,18 +260,17 @@ void MediaPlayer::decodeStream() {
 }
 
 void MediaPlayer::decodeVideo(AVFrame* frame, double pts) {
-	// convert to RGB565
-	sws_scale(mCtxConvert, frame->data, frame->linesize, 0, mVideoHeight,
-			mFrame->data, mFrame->linesize);
-
+	mFrame = frame;
 	mListener->postVideo();
 }
 
 void MediaPlayer::drawFrame(JNIEnv* env, jobject bitmap) {
-	void* pixels;
-	AndroidBitmap_lockPixels(env, bitmap, &pixels);
-	avpicture_fill((AVPicture*) mFrame, (uint8_t*) pixels, PIX_FMT_RGB565LE,
-			mVideoWidth, mVideoHeight);
+	uint16_t* pixels;
+	AndroidBitmap_lockPixels(env, bitmap, (void**)&pixels);
+
+	// convert to RGB565
+	yuv420_2_rgb565(pixels, mFrame->data[0], mFrame->data[2], mFrame->data[1], mVideoWidth, mVideoHeight, mFrame->linesize[0], mFrame->linesize[1], mVideoWidth, yuv2rgb565_table, 0);
+
 	AndroidBitmap_unlockPixels(env, bitmap);
 }
 

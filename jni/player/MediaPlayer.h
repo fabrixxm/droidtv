@@ -79,7 +79,6 @@ private:
 	AVFormatContext* mInputFile;
 	int mAudioStreamIndex;
 	int mVideoStreamIndex;
-	struct SwsContext* mCtxConvert;
 
 	AudioDecoder* mAudioDecoder;
 	VideoDecoder* mVideoDecoder;
