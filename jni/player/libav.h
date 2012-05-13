@@ -8,7 +8,7 @@ __BEGIN_DECLS
 #include "../libav/config.h"
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
-#include <libswscale/swscale.h>
+#include "yuv2rgb/yuv2rgb.h"
 
 __END_DECLS
 

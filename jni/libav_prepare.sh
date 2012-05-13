@@ -24,8 +24,6 @@ PLATFORM=$ANDROID_NDK_HOME/platforms/android-$API_VERSION/arch-arm
 	./configure --target-os=linux \
 		--arch=arm \
 		--cpu=armv7-a \
-		--extra-cflags='-march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16' \
-		--extra-ldflags='-Wl,--fix-cortex-a8' \
 		--cross-prefix=$PREBUILT/bin/arm-linux-androideabi- \
 		--sysroot=$PLATFORM \
 		--enable-shared \
@@ -48,6 +46,8 @@ PLATFORM=$ANDROID_NDK_HOME/platforms/android-$API_VERSION/arch-arm
 		--disable-encoders \
 		--disable-muxers \
 		--disable-devices \
+		--disable-swscale \
+		--disable-postproc \
 		--disable-symver || exit 1
 
 	echo "Patch config.h"
@@ -62,6 +62,4 @@ EOF
 	cp -v ../template_libav_module.mk libavfilter/Android.mk
 	cp -v ../template_libav_module.mk libavformat/Android.mk
 	cp -v ../template_libav_module.mk libavutil/Android.mk
-	cp -v ../template_libav_module.mk libswscale/Android.mk
-	cp -v ../template_libav_module.mk libpostproc/Android.mk
 )
