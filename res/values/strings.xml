@@ -51,5 +51,10 @@
     <string name="no_device">Sorry, no device found or device acces denied.
 This application *NEEDS* a working DVB device, plugged into your Android device and set up with drivers, firmware and correct permissions.
 Make sure that these prerequirements are met and try again.</string>
+    <string name="really_quit">Vraiment quitter ?</string>
+    <string name="yes">oui</string>
+    <string name="no">non</string>
+    <string name="config">Configurer</string>
+    <string name="back">retour</string>
 
 </resources>

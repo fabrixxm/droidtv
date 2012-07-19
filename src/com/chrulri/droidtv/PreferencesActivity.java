@@ -43,5 +43,14 @@ public class PreferencesActivity extends PreferenceActivity {
                 return true;
             }
         });
+        
+        Preference backButton = findPreference("back");
+        backButton.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                finish();
+                return true;
+            }
+        });
     }
 }

@@ -16,20 +16,94 @@
  *  You should have received a copy of the GNU General Public License         *
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.     *
  ***************************************************************************-->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical" >
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="horizontal" >
 
-    <Spinner
+	
+	
+	<VideoView
+        android:id="@+id/videoFrame"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:keepScreenOn="true" />
+    		
+	<LinearLayout
+    android:layout_width="200dp"
+    android:layout_height="wrap_content"
+    android:id="@+id/chanlist"
+    android:orientation="vertical" >
+    	    
+    	<Spinner
         android:id="@+id/spinner"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content" />
 
-    <ListView
+    	<ListView
         android:id="@+id/listView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
-    </ListView>
-
-</LinearLayout>
+        android:background="@android:color/transparent"
+		android:cacheColorHint="@android:color/transparent"        
+        android:layout_weight="1"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp" >
+    	</ListView>
+    	<DigitalClock 
+        android:id="@+id/digitalClock"
+		android:background="@android:color/transparent"
+		android:cacheColorHint="@android:color/transparent"        
+        android:layout_width="fill_parent" 
+        android:layout_height="wrap_content" 
+        android:gravity="center" 
+	    android:textColor="@color/green"
+        android:textSize="20sp"/>
+    	
+		<TextView         
+        android:id="@+id/batteryLevel"
+        android:background="@android:color/transparent"
+		android:cacheColorHint="@android:color/transparent"        
+        android:layout_width="fill_parent" 
+        android:layout_height="wrap_content" 
+	    android:textColor="@color/green"
+        android:gravity="center" />	
+	</LinearLayout>
+	
+	
+        
+	<LinearLayout 
+	    android:id="@+id/controlButs"
+	    android:orientation="vertical"
+	    android:layout_width="200dp"
+    	android:layout_height="wrap_content"
+	    android:layout_gravity="right">
+    	<Button 
+    	    android:id="@+id/quitBut"	
+    	    android:text="@string/quit"    	    
+        	android:layout_width="fill_parent"
+        	android:layout_height="wrap_content" />
+    	<Button 
+    	    android:id="@+id/configBut"	
+    	    android:text="@string/config"
+        	android:layout_width="fill_parent"
+        	android:layout_height="wrap_content" />
+	</LinearLayout>		
+	
+	<LinearLayout 
+	    android:orientation="vertical"
+	    android:layout_width="wrap_content"
+    	android:layout_height="wrap_content"
+	    android:layout_gravity="center_horizontal|top">
+		<TextView         
+		    android:id="@+id/channelName"
+	    android:textColor="@color/green"
+        android:background="@android:color/transparent"
+		android:cacheColorHint="@android:color/transparent"        
+        android:layout_width="fill_parent" 
+        android:layout_height="wrap_content" 
+        android:layout_gravity="center_horizontal|top"
+		android:textSize="40sp"
+        android:text=""
+         />	
+    </LinearLayout>
+</FrameLayout>

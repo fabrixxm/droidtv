@@ -24,7 +24,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
 import com.chrulri.droidtv.PreferencesActivity;
-import com.chrulri.droidtv.StreamActivity.DvbType;
+import com.chrulri.droidtv.ChannelsActivity.DvbType;
 
 public final class PreferenceUtils {
     static final String TAG = PreferenceUtils.class.getName();

@@ -32,6 +32,9 @@
         <Preference
             android:key="scanChannels"
             android:title="@string/preftitle_scanChannels" />
+        <Preference
+            android:key="back"
+            android:title="@string/back" />
     </PreferenceCategory>
 
 </PreferenceScreen>
