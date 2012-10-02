@@ -26,8 +26,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import android.widget.VideoView;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
+//import android.widget.VideoView;
+
+import com.chrulri.droidtv.CustomVideoView;
 import com.chrulri.droidtv.utils.ErrorUtils;
 import com.chrulri.droidtv.utils.ParallelTask;
 import com.chrulri.droidtv.utils.ProcessUtils;
@@ -56,6 +61,7 @@ import java.net.SocketException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import android.view.*;
 
 /**
  * DVBlast wrapper activity <br/>
@@ -134,7 +140,7 @@ public class StreamActivity extends Activity {
     private AsyncStreamTask mStreamTask;
     private DatagramSocket mUdpSocket;
     private ServerSocket mHttpSocket;
-    private VideoView mVideoView;
+    private CustomVideoView mVideoView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -142,7 +148,7 @@ public class StreamActivity extends Activity {
         Log.d(TAG, "onCreate");
         setContentView(R.layout.stream);
         mChannelConfig = getIntent().getStringExtra(EXTRA_CHANNELCONFIG);
-        mVideoView = (VideoView) findViewById(R.id.stream_video);
+        mVideoView = (CustomVideoView) findViewById(R.id.stream_video);
         mVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
@@ -166,6 +172,43 @@ public class StreamActivity extends Activity {
         });
     }
 
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.streammenu, menu);
+		return true;
+	}
+	
+	public boolean onOptionsItemSelected(MenuItem item){
+		
+		switch (item.getItemId()) {
+    		case R.id.size43:
+				setVideoRatio(4f/3f);
+				return true;
+			case R.id.size169:
+				setVideoRatio(16f/9f);
+				return true;
+			default:
+				return super.onOptionsItemSelected(item);
+		}	
+	}
+	
+	private void setVideoRatio(float r){
+		int sW = getWindowManager().getDefaultDisplay().getWidth();
+		int sH = getWindowManager().getDefaultDisplay().getHeight();
+		float sR = (float)sW / (float)sH;
+		
+		int w = sW;
+		int h = sH;
+		
+		if(sR > r){
+			w = (int)(sH * r);
+		} else {
+			h = (int)(sW / r);
+		}
+		Log.d(TAG, "setVideoRatio "+r+" ("+w+"x"+h+")");
+		mVideoView.resizeVideo(w, h);
+	}
+	
     @Override
     protected void onStart() {
         Log.d(TAG, "onStart");

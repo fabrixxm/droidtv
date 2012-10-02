@@ -4,10 +4,11 @@
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
-    <VideoView
+    <com.chrulri.droidtv.CustomVideoView
         android:id="@+id/stream_video"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+		android:layout_centerInParent="true"
         android:keepScreenOn="true" />
 
 </LinearLayout>
