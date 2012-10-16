@@ -181,6 +181,8 @@ public class StreamActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item){
 		
 		switch (item.getItemId()) {
+			case R.id.sizeDefault:
+				mVideoView.defaultVideoSize();
     		case R.id.size43:
 				setVideoRatio(4f/3f);
 				return true;

@@ -26,7 +26,8 @@ public class CustomVideoView extends VideoView
 {
 	protected int _overrideWidth = 640;
 	protected int _overrideHeight = 480;
-	
+	protected Boolean _useDefault = true;
+		
 	public CustomVideoView(Context c){
 		super(c);
 	}
@@ -38,6 +39,7 @@ public class CustomVideoView extends VideoView
 	public void resizeVideo(int w, int h){
 		_overrideWidth = w;
 		_overrideHeight = h;
+		_useDefault = false;
 		
 		getHolder().setFixedSize(w,h);
 		
@@ -45,8 +47,17 @@ public class CustomVideoView extends VideoView
 		invalidate();
 	}
 	
+	public void defaultVideoSize(){
+		_useDefault = true;
+	}
+	
+	
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec){
-		setMeasuredDimension(_overrideWidth, _overrideHeight);
+		if (_useDefault) {
+			setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
+		} else {
+			setMeasuredDimension(_overrideWidth, _overrideHeight);	
+		}
 	}
 }

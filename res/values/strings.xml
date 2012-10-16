@@ -24,6 +24,7 @@
     <string name="quit">Quit</string>
     <string name="channels">Channels</string>
     <string name="settings">Settings</string>
+	<string name="sizeDefault">Default</string>
 	<string name="size43">Force 4:3</string>
 	<string name="size169">Force 16:9</string>	
     <string name="buffering">Buffering. Please wait…</string>
